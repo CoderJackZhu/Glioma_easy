@@ -10,7 +10,8 @@ import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import gc
 from dataset.transform import MedicalImageScaler
-from models.model import ClsModel
+from models.model import ClsModel, MultiModalCNN
+
 FILE = Path(__file__).resolve()
 
 ROOT = FILE.parents[1]
@@ -62,7 +63,8 @@ def train(device, args):
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
-    model = generate_model(model_depth=args.model_depth)
+    # model = generate_model(model_depth=args.model_depth)
+    model = MultiModalCNN(num_modalities=4, input_channels=1, num_classes=4)
     print(model.state_dict().keys())
     model.to(device)
 
@@ -97,12 +99,13 @@ def train(device, args):
             if step % args.print_freq == 0:
                 logger.info(
                     f"Epoch: [{epoch}/{args.epochs}][{step}/{len(train_loader)}], lr: {optimizer.param_groups[-1]['lr']:.5f} \t loss = {losses.val:.4f}({losses.avg:.4f})")
-                # tensorboard可视化
-                tb_writer.add_scalar('train/loss', losses.avg, epoch * len(train_loader) + step)
 
             optimizer.step()
             optimizer.zero_grad()
             scheduler.step()
+        # 得到一个epoch的平均loss，并可视化
+        logger.info(f'Epoch: [{epoch}/{args.epochs}] \t loss = {losses.avg:.4f}')
+        tb_writer.add_scalar('train/loss', losses.avg, epoch + 1)
 
         # evaluate on validation set
         if (epoch + 1) % args.eval_freq == 0 or epoch == args.epochs - 1:

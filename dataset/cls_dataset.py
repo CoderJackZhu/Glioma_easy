@@ -117,7 +117,7 @@ class ClsDataset(Dataset):
 
 
 if __name__ == '__main__':
-    split_train_test(glioma_dir='G:\\Dataset\\captk_before_data')
+    split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data')
     # train_dataset = ClsDataset(list_file='train_patients.txt', transform=None)
     # test_dataset = ClsDataset(list_file='test_patients.txt', transform=None)
     #
