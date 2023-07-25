@@ -9,7 +9,7 @@ import torch.optim
 import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import gc
-from dataset.transform import MedicalImageScaler
+# from dataset.transform import MedicalImageScaler
 from models.model import ClsModel, MultiModalCNN
 
 FILE = Path(__file__).resolve()
@@ -47,7 +47,8 @@ def train(device, args):
         list_file=args.train_list,
         transform=None
     )
-
+    # [RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2), (0.8, 1.2)),
+    #                    ToTensor()]
     logger.info(f"Num train examples = {len(train_dataset)}")
     logger.info(f"Num val examples = {len(val_dataset)}")
     val_loader = torch.utils.data.DataLoader(
@@ -64,7 +65,7 @@ def train(device, args):
 
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
     # model = generate_model(model_depth=args.model_depth)
-    model = MultiModalCNN(num_modalities=4, input_channels=1, num_classes=4)
+    model = MultiModalCNN(num_modalities=4, input_channels=4, num_classes=4)
     print(model.state_dict().keys())
     model.to(device)
 
@@ -134,6 +135,7 @@ def train(device, args):
 
                 labels = labels.cpu().numpy()
                 predicts = predicts.cpu().numpy()
+                print(labels, predicts)
 
                 eval_result = (np.sum(labels == predicts)) / len(labels)
                 eval_results.append(eval_result)

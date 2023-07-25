@@ -1,12 +1,13 @@
 import os
 import h5py
+from PIL import Image
 import torch
 from torch.utils.data import Dataset
 import numpy as np
 import nibabel as nib
 import pandas as pd
 from sklearn.model_selection import train_test_split
-
+from dataset.transform import *
 
 class ImageInfo:
     def __init__(self, row):
@@ -70,9 +71,12 @@ def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data
 
 
 class ClsDataset(Dataset):
-    def __init__(self, list_file, transform=None):
+    def __init__(self, list_file : str,
+                 transform: list = None,
+    ):
         self.list_file = list_file
         self.transform = transform
+
         self._parser_input_data()
 
     def _parser_input_data(self):
@@ -100,6 +104,9 @@ class ClsDataset(Dataset):
             if file.endswith('.nii.gz'):
                 img = nib.load(os.path.join(img_path, file)).get_fdata()
                 img = np.array(img)
+                if self.transform is not None:
+                    for transform in self.transform:
+                        img = transform(img)
                 img_list.append(img)
         # img = np.array(img_list)
         # 把在通道维度上将四个模态的影像堆叠在一起，形成一个新的多通道影像，每个影像都素
@@ -107,9 +114,6 @@ class ClsDataset(Dataset):
         # # 将多个医学影像拼接在一起
         # img = np.concatenate(img, axis=2)
         # print(img.shape)
-
-        if self.transform is not None:
-            img = self.transform(img)
         return img, torch.as_tensor(img_label, dtype=torch.long)
 
     def __len__(self):
@@ -117,7 +121,7 @@ class ClsDataset(Dataset):
 
 
 if __name__ == '__main__':
-    split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data')
+    split_train_test(glioma_dir='G:\\Dataset\\captk_before_data')
     # train_dataset = ClsDataset(list_file='train_patients.txt', transform=None)
     # test_dataset = ClsDataset(list_file='test_patients.txt', transform=None)
     #

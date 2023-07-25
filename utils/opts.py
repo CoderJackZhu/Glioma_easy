@@ -5,7 +5,7 @@ import argparse
 parser = argparse.ArgumentParser(description="PyTorch implementation of image classification")
 
 # ========================= Data Configs ==========================
-parser.add_argument('--num_classes', type=int, default=4, help='the numbers of the image classification task')
+parser.add_argument('--num_classes', type=int, default=2, help='the numbers of the image classification task')
 parser.add_argument('--input_size', default=224, type=int, help="the input feature dimension for the ")
 parser.add_argument('--train_list', default='/media/spgou/DATA/ZYJ/Glioma_easy/dataset/train_patients.txt', type=str, help='the path of training samples text file')
 parser.add_argument('--val_list', default='/media/spgou/DATA/ZYJ/Glioma_easy/dataset/test_patients.txt', type=str, help='the path of validation samples text file')
