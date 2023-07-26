@@ -69,7 +69,7 @@ def train(device, args):
 
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
     # model = generate_model(model_depth=args.model_depth)
-    model = MultiModalCNN(num_modalities=4, input_channels=4, hidden_channels=64,  num_classes=4)
+    model = MultiModalCNN(num_modalities=2, input_channels=4, hidden_channels=64,  num_classes=4)
     print(model.state_dict().keys())
     model.to(device)
 
@@ -107,7 +107,7 @@ def train(device, args):
 
             optimizer.step()
             optimizer.zero_grad()
-            scheduler.step()
+        scheduler.step()
         # 得到一个epoch的平均loss，并可视化
         logger.info(f'Epoch: [{epoch}/{args.epochs}] \t loss = {losses.avg:.4f}')
         tb_writer.add_scalar('train/loss', losses.avg, epoch + 1)

@@ -99,7 +99,7 @@ class ClsDataset(Dataset):
         img_list = []
         path_dir = os.listdir(img_path)
         path_dir.sort()
-
+        i = 0
         for file in path_dir:
             if file.endswith('.nii.gz'):
                 img = nib.load(os.path.join(img_path, file)).get_fdata()
@@ -108,6 +108,9 @@ class ClsDataset(Dataset):
                     for transform in self.transform:
                         img = transform(img)
                 img_list.append(img)
+                i+=1
+                if i==2:
+                    break
         # img = np.array(img_list)
         # 把在通道维度上将四个模态的影像堆叠在一起，形成一个新的多通道影像，每个影像都素
         img = np.stack(img_list, axis=0)
@@ -121,7 +124,7 @@ class ClsDataset(Dataset):
 
 
 if __name__ == '__main__':
-    split_train_test(glioma_dir='G:\\Dataset\\captk_before_data')
+    split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/RadiogenomicsProjects/GliomasSubtypes/PreprocessedImages/XiangyaHospital_train/zscore/zscore_normalizedImages_normal')
     # train_dataset = ClsDataset(list_file='train_patients.txt', transform=None)
     # test_dataset = ClsDataset(list_file='test_patients.txt', transform=None)
     #
