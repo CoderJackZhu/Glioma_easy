@@ -128,14 +128,14 @@ import random
 #         return img
 
 
-def random_augmentation(arr_img, shift_range, scale_range, gamma_range, p):
+def random_augmentation(arr_img, shift_range, scale_range, gamma_range, p=1):
     if random.random() < p:
-        arr_img = random_gamma_transformation(arr_img, gamma_range, p)
-        arr_img = random_flip(arr_img, p)
-        arr_img = random_permute(arr_img, p)
-        arr_img = random_rotate(arr_img, 3, p)
-        arr_img = random_shift(arr_img, shift_range, p)
-        arr_img = random_scale(arr_img, scale_range, p)
+        # arr_img = random_gamma_transformation(arr_img, gamma_range, p)
+        # arr_img = random_flip(arr_img, p)
+        # arr_img = random_permute(arr_img, p)
+        # arr_img = random_rotate(arr_img, 3, p)
+        # arr_img = random_shift(arr_img, shift_range, p)
+        # arr_img = random_scale(arr_img, scale_range, p)
         arr_img = random_noise(arr_img, p)
     return arr_img
 
@@ -388,7 +388,7 @@ class RandomNoise(object):
         pass
 
     def __call__(self, arr_img):
-        return random_noise(arr_img)
+        return random_noise(arr_img, 0.5)
 
 
 class RandomAugmentation(object):

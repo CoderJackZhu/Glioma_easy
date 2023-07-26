@@ -92,8 +92,11 @@ def resnet_block(in_channels, out_channels, num_residuals, first_block=False):
 
 
 class my_resnet(nn.Module):
-    def __init__(self):
+    def __init__(self, input_channels, hidden_channels, num_classes):
         super(my_resnet, self).__init__()
+        self.input_channels = input_channels
+        self.hidden_channels = hidden_channels
+        self.num_classes = num_classes
         self.net = nn.Sequential(
             nn.Conv2d(240, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3)),
             nn.BatchNorm2d(32),
@@ -101,11 +104,14 @@ class my_resnet(nn.Module):
             nn.MaxPool2d(kernel_size=2, stride=2),
 
             resnet_block(32, 32, 2, True),
-            resnet_block(32, 64, 2)
+            resnet_block(32, 64, 2),
+            resnet_block(64, 128, 2),
+            resnet_block(128, 256, 2),
+            resnet_block(256, 512, 2)
         )
 
         self.fc = nn.Sequential(
-            nn.Linear(64, 4)
+            nn.Linear(512, self.hidden_channels)
         )
 
     def forward(self, x):
@@ -118,7 +124,7 @@ class my_resnet(nn.Module):
 
 # Define single modality 3D CNN
 class SingleModalityCNN(nn.Module):
-    def __init__(self, input_channels, num_classes):
+    def __init__(self, input_channels, hidden_channels, num_classes):
         super(SingleModalityCNN, self).__init__()
         # self.conv1 = nn.Conv3d(input_channels, 16, kernel_size=3, padding=1)
         # self.conv2 = nn.Conv3d(16, 32, kernel_size=3, padding=1)
@@ -129,7 +135,7 @@ class SingleModalityCNN(nn.Module):
         # 使用3d resnet提取特征，让网络的输入通道数为1
         # self.model = torchvision.models.video.r3d_18(pretrained=True, progress=True)
         # self.model.stem[0] = nn.Conv3d(1, 64, kernel_size=(3, 7, 7), stride=(1, 2, 2), padding=(1, 3, 3), bias=False)
-        self.model = my_resnet()
+        self.model = my_resnet(input_channels, hidden_channels, num_classes)
 
 
 
@@ -146,14 +152,21 @@ class SingleModalityCNN(nn.Module):
 
 # Define multi-modal model with feature-level fusion
 class MultiModalCNN(nn.Module):
-    def __init__(self, num_modalities, input_channels, num_classes):
+    def __init__(self, num_modalities, input_channels, hidden_channels, num_classes):
         super(MultiModalCNN, self).__init__()
-        self.modalities = nn.ModuleList([SingleModalityCNN(input_channels, num_classes) for _ in range(num_modalities)])
-        self.fc = nn.Linear(num_modalities * num_classes, num_classes)
+        self.modalities = nn.ModuleList([SingleModalityCNN(input_channels, hidden_channels, num_classes) for _ in range(num_modalities)])
+        # 把得到的一维特征向量进行通道拼接并融合
+        self.fusion = nn.Sequential(
+            nn.Linear(num_modalities * hidden_channels, num_modalities * hidden_channels),
+            nn.ReLU(),
+            nn.Dropout(0.5)
+        )
+        self.fc = nn.Linear(num_modalities * hidden_channels, num_classes)
 
     def forward(self, inputs):
         modal_outputs = [modality(inputs[:, i, :, :, :]) for i, modality in enumerate(self.modalities)]
         fused_output = torch.cat(modal_outputs, dim=1)
+        fused_output = self.fusion(fused_output)
         fused_output = self.fc(fused_output)
         return fused_output
 
@@ -168,8 +181,9 @@ if __name__ == '__main__':
     num_modalities = 4
     input_channels = 4
     num_classes = 4
+    hidden_channels = 64
     device = torch.device('cuda:0')
-    model = MultiModalCNN(num_modalities, input_channels, num_classes).to(device)
+    model = MultiModalCNN(num_modalities, input_channels, hidden_channels, num_classes).to(device)
     batch_size = 1
     inputs = torch.randn(batch_size, num_modalities, 240, 240, 155).to(device)
     # 通道变换
@@ -181,4 +195,4 @@ if __name__ == '__main__':
     outputs = model(inputs)
     # print(one_model(inputs[:, 1, :, :, :]).shape)
     print(outputs.shape)
-    print(outputs)
+    print(outputs.cpu().detach().numpy())

@@ -9,6 +9,10 @@ import torch.optim
 import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import gc
+
+from torchvision.transforms import ToTensor
+
+from dataset.transform import RandomAugmentation, RandomNoise
 # from dataset.transform import MedicalImageScaler
 from models.model import ClsModel, MultiModalCNN
 
@@ -45,7 +49,7 @@ def train(device, args):
     )
     train_dataset = ClsDataset(
         list_file=args.train_list,
-        transform=None
+        transform=[RandomNoise()]
     )
     # [RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2), (0.8, 1.2)),
     #                    ToTensor()]
@@ -65,7 +69,7 @@ def train(device, args):
 
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
     # model = generate_model(model_depth=args.model_depth)
-    model = MultiModalCNN(num_modalities=4, input_channels=4, num_classes=4)
+    model = MultiModalCNN(num_modalities=4, input_channels=4, hidden_channels=64,  num_classes=4)
     print(model.state_dict().keys())
     model.to(device)
 
@@ -112,7 +116,7 @@ def train(device, args):
         if (epoch + 1) % args.eval_freq == 0 or epoch == args.epochs - 1:
             model.eval()
             with torch.no_grad():
-                preds, labels = [], []
+                preds, labels, losses = [], [], []
                 eval_pbar = tqdm.tqdm(val_loader, desc=f'epoch {epoch + 1} / {args.epochs} evaluating', position=1,
                                       disable=False)
                 for step, (img, target) in enumerate(eval_pbar):
@@ -125,23 +129,30 @@ def train(device, args):
                     target = target.to(device, dtype=torch.float32)
 
                     output = model(img)
+                    loss = criterion(output, target.long())
                     predict = torch.max(output, dim=1)[1]
 
                     labels.append(target)
                     preds.append(predict)
+                    losses.append(loss.item())
 
                 labels = torch.cat(labels, dim=0)
                 predicts = torch.cat(preds, dim=0)
 
+
                 labels = labels.cpu().numpy()
                 predicts = predicts.cpu().numpy()
-                print(labels, predicts)
+                # 计算验证集的损失
+                eval_loss = np.mean(losses)
+                print(labels, predicts, eval_loss)
 
                 eval_result = (np.sum(labels == predicts)) / len(labels)
                 eval_results.append(eval_result)
                 logger.info(f'precision = {eval_result:.4f}')
+                logger.info(f'eval_loss = {eval_loss:.4f}')
                 # tensorboard可视化
                 tb_writer.add_scalar('val/precision', eval_result, epoch + 1)
+                tb_writer.add_scalar('val/loss', eval_loss, epoch + 1)
                 # 保存模型
                 save_path = os.path.join(args.output, f'precision_{eval_result:.4f}_num_{epoch + 1}')
                 os.makedirs(save_path, exist_ok=True)
