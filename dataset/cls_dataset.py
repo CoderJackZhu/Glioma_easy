@@ -239,7 +239,7 @@ class ClsDataset(Dataset):
                 #     break
         # img = np.array(img_list)
         # 把在通道维度上将四个模态的影像堆叠在一起，形成一个新的多通道影像，每个影像都素
-        img = np.stack(img_list, axis=0)
+        img = np.stack(img_list, axis=-1)
         # # 将多个医学影像拼接在一起
         # img = np.concatenate(img, axis=2)
         # print(img.shape)

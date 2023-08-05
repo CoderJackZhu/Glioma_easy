@@ -111,7 +111,8 @@ class my_resnet(nn.Module):
         )
 
         self.fc = nn.Sequential(
-            nn.Linear(512, self.hidden_channels)
+            nn.Linear(512, self.hidden_channels),
+            nn.Linear(self.hidden_channels, self.hidden_channels)
         )
 
     def forward(self, x):
@@ -185,7 +186,7 @@ if __name__ == '__main__':
     device = torch.device('cuda:0')
     model = MultiModalCNN(num_modalities, input_channels, hidden_channels, num_classes).to(device)
     batch_size = 1
-    inputs = torch.randn(batch_size, num_modalities, 240, 240, 155).to(device)
+    inputs = torch.randn(batch_size, 240, 240, 155, num_modalities).to(device)
     # 通道变换
     # inputs = inputs.permute(0, 4, 1, 2, 3)
     # one_model = SingleModalityCNN(input_channels, num_classes)

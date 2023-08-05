@@ -12,7 +12,7 @@ import gc
 
 from torchvision.transforms import ToTensor
 
-from dataset.transform import RandomAugmentation, RandomNoise
+from dataset.transform import RandomAugmentation, RandomNoise, Scale
 # from dataset.transform import MedicalImageScaler
 from models.model import ClsModel, MultiModalCNN
 
@@ -45,11 +45,11 @@ def train(device, args):
     tb_writer = SummaryWriter(log_dir=save_dir)
     val_dataset = ClsDataset(
         list_file=args.val_list,
-        transform=None
+        transform=[Scale(0.5)]
     )
     train_dataset = ClsDataset(
         list_file=args.train_list,
-        transform=[RandomNoise()]
+        transform=[RandomNoise(), Scale(0.5)]
     )
     # [RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2), (0.8, 1.2)),
     #                    ToTensor()]

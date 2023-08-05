@@ -127,6 +127,20 @@ import random
 #             img = Image.fromarray(img.astype(np.uint8))
 #         return img
 
+def resize(img, shape, mode='constant', orig_shape=(155, 240, 240)):
+    """
+    Wrapper for scipy.ndimage.zoom suited for MRI images.
+    """
+    assert len(shape) == 3, "Can not have more than 3 dimensions"
+    factors = (
+        shape[0] / orig_shape[0],
+        shape[1] / orig_shape[1],
+        shape[2] / orig_shape[2]
+    )
+
+    # Resize to the given shape
+    return zoom(img, factors, mode=mode)
+
 
 def random_augmentation(arr_img, shift_range, scale_range, gamma_range, p=1):
     if random.random() < p:
