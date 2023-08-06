@@ -71,7 +71,7 @@ def train(device, args):
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
     # model = generate_model(model_depth=args.model_depth)
     # model = MultiModalCNN(num_modalities=2, input_channels=4, hidden_channels=64,  num_classes=4)
-    model = UNETR.UNETR(
+    model = UNETR(
         in_channels=4,
         out_channels=2,
         img_size=(128, 128, 128),

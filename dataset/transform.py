@@ -270,7 +270,7 @@ def random_scale(arr_image, scale_factor_range, p):
     return arr_image
 
 
-def scale(arr_image, scale_factor, order):
+def scale(arr_image, scale_factor, order=3):
     shapes = arr_image.shape
     if order == 0:
         cval = 0
@@ -332,7 +332,7 @@ class Scale(object):
     """
     把scale函数封装成类，方便transform.Compose使用
     """
-    def __init__(self, scale_factor, order):
+    def __init__(self, scale_factor, order=3):
         self.scale_factor = scale_factor
         self.order = order
 
@@ -407,11 +407,11 @@ class RandomNoise(object):
     """
     把random_noise函数封装成类，方便transform.Compose使用
     """
-    def __init__(self):
-        pass
+    def __init__(self, p=0.5):
+        self.p = p
 
     def __call__(self, arr_img):
-        return random_noise(arr_img, 0.5)
+        return random_noise(arr_img, p=self.p)
 
 
 class RandomAugmentation(object):

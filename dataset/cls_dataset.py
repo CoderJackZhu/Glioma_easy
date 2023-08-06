@@ -241,7 +241,7 @@ class ClsDataset(Dataset):
         img = np.stack(img_list, axis=0)
         # # 将多个医学影像拼接在一起
         # img = np.concatenate(img, axis=2)
-        print(img.shape)
+        # print(img.shape)
         return img, torch.as_tensor(img_label, dtype=torch.long)
 
     def __len__(self):
@@ -249,13 +249,13 @@ class ClsDataset(Dataset):
 
 
 if __name__ == '__main__':
-    # split_train_test(
-    #     glioma_dir='G:\\Dataset\\zscore_normalizedImages')
-    train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
-    test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128))])
-
-    for k, v in train_dataset:
-        print('Training:', k, v)
-
-    for k, v in test_dataset:
-        print('Testing:', k, v)
+    split_train_test(
+        glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages')
+    # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
+    # test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128))])
+    #
+    # for k, v in train_dataset:
+    #     print('Training:', k, v)
+    #
+    # for k, v in test_dataset:
+    #     print('Testing:', k, v)
