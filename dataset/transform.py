@@ -1,62 +1,61 @@
 from PIL import Image, ImageFilter
 from torchvision import transforms
-from torchvision.transforms import Resize
 from scipy.ndimage import zoom
 import SimpleITK as sitk
 import numpy as np
 import scipy.ndimage
 import random
 
-# class MedicalImageScaler:
-#     def __init__(self, scale_factors):
-#         """
-#         参数：
-#             scale_factors：一个长度为3的元组或列表，表示在每个维度上的缩放因子。
-#         """
-#         self.scale_factors = scale_factors
-#
-#     def ensure_valid_shape(self, image):
-#         """
-#         确保影像满足缩放的要求，若不满足，则进行裁剪或填充。
-#
-#         参数：
-#             image：numpy数组，形状为(D, H, W)，表示3D医学影像数据。
-#
-#         返回：
-#             new_image：numpy数组，形状为(D', H', W')，表示处理后的3D医学影像数据。
-#         """
-#         original_shape = image.shape
-#         target_shape = [int(dim * factor) for dim, factor in zip(image.shape, self.scale_factors)]
-#
-#         # 如果原始影像尺寸等于目标尺寸，则无需处理
-#         if original_shape == target_shape:
-#             return image
-#
-#         # 将目标尺寸限制在原始影像尺寸范围内，避免缩放后尺寸过小或过大
-#         target_shape = [min(dim, target_dim) for dim, target_dim in zip(original_shape, target_shape)]
-#
-#         # 使用裁剪或填充来调整影像尺寸
-#         new_image = np.zeros(target_shape, dtype=image.dtype)
-#         slices = tuple(slice(0, min(dim, target_dim)) for dim, target_dim in zip(original_shape, target_shape))
-#         new_image[slices] = image[slices]
-#
-#         return new_image
-#
-#     def __call__(self, image):
-#         """
-#         参数：
-#             image：numpy数组，形状为(D, H, W)，表示3D医学影像数据。
-#
-#         返回：
-#             scaled_image：numpy数组，形状为(D', H', W')，表示缩放后的3D医学影像数据。
-#         """
-#         # 确保影像满足缩放的要求
-#         image = self.ensure_valid_shape(image)
-#
-#         # 使用SciPy的zoom函数进行缩放
-#         scaled_image = zoom(image, self.scale_factors, order=3)  # 使用三次样条插值进行缩放
-#
-#         return scaled_image
+class MedicalImageScaler:
+    def __init__(self, scale_factors):
+        """
+        参数：
+            scale_factors：一个长度为3的元组或列表，表示在每个维度上的缩放因子。
+        """
+        self.scale_factors = scale_factors
+
+    def ensure_valid_shape(self, image):
+        """
+        确保影像满足缩放的要求，若不满足，则进行裁剪或填充。
+
+        参数：
+            image：numpy数组，形状为(D, H, W)，表示3D医学影像数据。
+
+        返回：
+            new_image：numpy数组，形状为(D', H', W')，表示处理后的3D医学影像数据。
+        """
+        original_shape = image.shape
+        target_shape = [int(dim * factor) for dim, factor in zip(image.shape, self.scale_factors)]
+
+        # 如果原始影像尺寸等于目标尺寸，则无需处理
+        if original_shape == target_shape:
+            return image
+
+        # 将目标尺寸限制在原始影像尺寸范围内，避免缩放后尺寸过小或过大
+        target_shape = [min(dim, target_dim) for dim, target_dim in zip(original_shape, target_shape)]
+
+        # 使用裁剪或填充来调整影像尺寸
+        new_image = np.zeros(target_shape, dtype=image.dtype)
+        slices = tuple(slice(0, min(dim, target_dim)) for dim, target_dim in zip(original_shape, target_shape))
+        new_image[slices] = image[slices]
+
+        return new_image
+
+    def __call__(self, image):
+        """
+        参数：
+            image：numpy数组，形状为(D, H, W)，表示3D医学影像数据。
+
+        返回：
+            scaled_image：numpy数组，形状为(D', H', W')，表示缩放后的3D医学影像数据。
+        """
+        # 确保影像满足缩放的要求
+        image = self.ensure_valid_shape(image)
+
+        # 使用SciPy的zoom函数进行缩放
+        scaled_image = zoom(image, self.scale_factors, order=3)  # 使用三次样条插值进行缩放
+
+        return scaled_image
 #
 #
 # # 随机旋转
@@ -127,19 +126,29 @@ import random
 #             img = Image.fromarray(img.astype(np.uint8))
 #         return img
 
-def resize(img, shape, mode='constant', orig_shape=(155, 240, 240)):
+def resize(img, shape, mode='constant', orig_shape=(240, 240, 155)):
     """
     Wrapper for scipy.ndimage.zoom suited for MRI images.
     """
     assert len(shape) == 3, "Can not have more than 3 dimensions"
     factors = (
-        shape[0] / orig_shape[0],
-        shape[1] / orig_shape[1],
-        shape[2] / orig_shape[2]
+        shape[-3] / orig_shape[0],
+        shape[-2] / orig_shape[1],
+        shape[-1] / orig_shape[2]
     )
 
     # Resize to the given shape
     return zoom(img, factors, mode=mode)
+
+
+class Resize(object):
+    def __init__(self, shape, mode='constant', orig_shape=(240, 240, 155)):
+        self.shape = shape
+        self.mode = mode
+        self.orig_shape = orig_shape
+
+    def __call__(self, img):
+        return resize(img, self.shape, self.mode, self.orig_shape)
 
 
 def random_augmentation(arr_img, shift_range, scale_range, gamma_range, p=1):

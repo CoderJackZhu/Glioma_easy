@@ -12,9 +12,10 @@ import gc
 
 from torchvision.transforms import ToTensor
 
-from dataset.transform import RandomAugmentation, RandomNoise, Scale
+from dataset.transform import RandomAugmentation, RandomNoise, Scale, Resize
 # from dataset.transform import MedicalImageScaler
 from models.model import ClsModel, MultiModalCNN
+from models import UNETR
 
 FILE = Path(__file__).resolve()
 
@@ -45,11 +46,11 @@ def train(device, args):
     tb_writer = SummaryWriter(log_dir=save_dir)
     val_dataset = ClsDataset(
         list_file=args.val_list,
-        transform=[Scale(0.5)]
+        transform=[Resize((128, 128, 128))]
     )
     train_dataset = ClsDataset(
         list_file=args.train_list,
-        transform=[RandomNoise(), Scale(0.5)]
+        transform=[Resize((128, 128, 128)), RandomNoise(0.3)]
     )
     # [RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2), (0.8, 1.2)),
     #                    ToTensor()]
@@ -69,7 +70,23 @@ def train(device, args):
 
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
     # model = generate_model(model_depth=args.model_depth)
-    model = MultiModalCNN(num_modalities=2, input_channels=4, hidden_channels=64,  num_classes=4)
+    # model = MultiModalCNN(num_modalities=2, input_channels=4, hidden_channels=64,  num_classes=4)
+    model = UNETR.UNETR(
+        in_channels=4,
+        out_channels=2,
+        img_size=(128, 128, 128),
+        num_classes=4,
+        feature_size=16,
+        hidden_size=768,
+        mlp_dim=3072,
+        num_heads=12,
+        pos_embed='perceptron',
+        norm_name='instance',
+        conv_block=True,
+        res_block=True,
+        dropout_rate=0.0,
+    )
+
     print(model.state_dict().keys())
     model.to(device)
 
