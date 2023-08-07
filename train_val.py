@@ -9,6 +9,7 @@ import torch.optim
 import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import gc
+from sklearn.metrics import confusion_matrix, accuracy_score
 
 from torchvision.transforms import ToTensor
 
@@ -110,6 +111,7 @@ def train(device, args):
 
     model.zero_grad()
     eval_results = []
+    train_preds, train_labels = [], []
     for epoch in range(args.start_epoch, args.epochs):
         losses = AverageMeter()
         model.train()
@@ -124,6 +126,10 @@ def train(device, args):
             target = target.to(device)
 
             output = model(img)
+            predict = torch.max(output, dim=1)[1]
+            train_preds.append(predict)
+            train_labels.append(target)
+
             loss = criterion(output, target.long())
             loss.backward()
             losses.update(loss.item(), img.size(0))
@@ -185,6 +191,11 @@ def train(device, args):
                 model_to_save = (model.module if hasattr(model, "module") else model)
                 torch.save(model_to_save.state_dict(), os.path.join(save_path, f'epoch_{epoch + 1}.pth'))
 
+        train_preds = torch.cat(train_preds, dim=0).cpu().numpy()
+        train_labels = torch.cat(train_labels, dim=0).cpu().numpy()
+        train_accuracy = accuracy_score(train_labels, train_preds)
+        logger.info(f'train_accuracy = {train_accuracy:.4f}')
+        tb_writer.add_scalar('train/accuracy', train_accuracy, epoch + 1)
         # 清理GPU缓存
         torch.cuda.empty_cache()
         gc.collect()
