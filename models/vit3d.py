@@ -177,16 +177,16 @@ class PatchEmbed_3d(nn.Module):
 
 
 if __name__ == "__main__":
-    num_classes = 3
-    vit_base_patch16_224_3d = VisionTransformer_stage(img_size=224,
-                                                      in_c=1,
+    num_classes = 4
+    vit_base_patch16_224_3d = VisionTransformer_stage(img_size=128,
+                                                      in_c=128,
                                                       patch_size=16,
                                                       embed_dim=16 * 16 * 16,
                                                       depth=12,
                                                       num_heads=4,
                                                       num_classes=num_classes,
                                                       embed_layer=PatchEmbed_3d)
-    x = torch.randn(1, 1, 224, 224, 224)
+    x = torch.randn(1, 4, 128, 128, 128)
     X = vit_base_patch16_224_3d(x)
     print(X.shape)
     # torch.Size([1, 3])

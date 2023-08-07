@@ -59,7 +59,7 @@ def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data
 
     # 将数据分为训练集和测试集
     train_imgs, test_imgs, train_labels, test_labels = train_test_split(imgs_path, img_label, test_size=0.2,
-                                                                        random_state=0, stratify=img_label)
+                                                                        random_state=42, stratify=img_label)
 
     # 将训练集和测试集的数据分别写入txt文件
     with open('train_patients.txt', 'w') as f:
@@ -91,16 +91,15 @@ class ClsDataset(Dataset):
         #     # 把每个文件夹中的影像读取出来，并将其转换成h5py文件，每个文件夹对应一个h5py文件
         #     self._parser_input_data(use_h5py)
         # else:
-        assert os.path.exists(self.list_file)
-        lines = [x.strip().split('\t') for x in open(self.list_file, encoding='utf-8')]
-        # 将列表中的每一项转换成ImageInfo类
-        self.imgs_list = [ImageInfo(line) for line in lines]
+        # assert os.path.exists(self.list_file)
+        # lines = [x.strip().split('\t') for x in open(self.list_file, encoding='utf-8')]
+        # # 将列表中的每一项转换成ImageInfo类
+        # self.imgs_list = [ImageInfo(line) for line in lines]
+        self._parser_input_data()
 
     def _parser_input_data(self):
         """
         读取存放医学影像的文件夹，并将其转换成h5py文件，每个文件夹对应一个h5py文件
-        Args:
-            use_h5py:
 
         Returns:
 
@@ -232,6 +231,8 @@ class ClsDataset(Dataset):
                 if self.transform is not None:
                     for transform in self.transform:
                         img = transform(img)
+                # # 把最后一维的通道数放在第一维
+                # img = np.transpose(img, (3, 0, 1, 2))
                 img_list.append(img)
                 # i+=1
                 # if i==2:

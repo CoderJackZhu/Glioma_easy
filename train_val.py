@@ -15,7 +15,7 @@ from torchvision.transforms import ToTensor
 from dataset.transform import RandomAugmentation, RandomNoise, Scale, Resize
 # from dataset.transform import MedicalImageScaler
 from models.model import ClsModel, MultiModalCNN
-from models import UNETR
+from models import UNETR, uniformerv2_b16
 
 FILE = Path(__file__).resolve()
 
@@ -71,6 +71,15 @@ def train(device, args):
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
     # model = generate_model(model_depth=args.model_depth)
     # model = MultiModalCNN(num_modalities=2, input_channels=4, hidden_channels=64,  num_classes=4)
+    # model = uniformerv2_b16(
+    #     input_resolution=128,
+    #     pretrained=False,
+    #     t_size=128, backbone_drop_path_rate=0.2, drop_path_rate=0.4,
+    #     dw_reduction=1.5,
+    #     no_lmhra=True,
+    #     temporal_downsample=False,
+    #     num_classes=4
+    # )
     model = UNETR(
         in_channels=4,
         out_channels=2,
