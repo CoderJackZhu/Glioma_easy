@@ -2,7 +2,7 @@ import os
 import h5py
 from PIL import Image
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import nibabel as nib
 import pandas as pd
@@ -252,11 +252,34 @@ class ClsDataset(Dataset):
 if __name__ == '__main__':
     split_train_test(
         glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages')
-    # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
+    # # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
     # test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128))])
+    # #
+    # # for k, v in train_dataset:
+    # #     print('Training:', k, v)
+    # #
+    # # for k, v in test_dataset:
+    # #     print('Testing:', k, v)
     #
-    # for k, v in train_dataset:
-    #     print('Training:', k, v)
-    #
-    # for k, v in test_dataset:
-    #     print('Testing:', k, v)
+    # # train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=0)
+    # test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0)
+    # # 获取一个batch的数据并可视化
+    # # for i, (data, label) in enumerate(test_loader):
+    # #     print(data.shape)
+    # #     print(label.shape)
+    # #     print(label)
+    # #     print(data)
+    # #     break
+    # one_batch = next(iter(test_loader))
+    # print(one_batch[0].shape)
+    # # 把数据转换为numpy数组
+    # one_batch = one_batch[0].numpy()
+    # print(one_batch.shape)
+    # # 将其保存为nii文件
+    # img = nib.Nifti1Image(one_batch[0, 0, :, :, :], np.eye(4))
+    # nib.save(img, 'test.nii.gz')
+    # print(one_batch.shape)
+
+
+
+

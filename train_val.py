@@ -51,7 +51,7 @@ def train(device, args):
     )
     train_dataset = ClsDataset(
         list_file=args.train_list,
-        transform=[Resize((128, 128, 128)), RandomNoise(0.3)]
+        transform=[Resize((128, 128, 128)), RandomNoise(0.1)]
     )
     # [RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2), (0.8, 1.2)),
     #                    ToTensor()]
@@ -72,30 +72,30 @@ def train(device, args):
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
     # model = generate_model(model_depth=args.model_depth)
     # model = MultiModalCNN(num_modalities=2, input_channels=4, hidden_channels=64,  num_classes=4)
-    # model = uniformerv2_b16(
-    #     input_resolution=128,
-    #     pretrained=False,
-    #     t_size=128, backbone_drop_path_rate=0.2, drop_path_rate=0.4,
-    #     dw_reduction=1.5,
-    #     no_lmhra=True,
-    #     temporal_downsample=False,
-    #     num_classes=4
-    # )
-    model = UNETR(
-        in_channels=4,
-        out_channels=2,
-        img_size=(128, 128, 128),
-        num_classes=4,
-        feature_size=16,
-        hidden_size=768,
-        mlp_dim=3072,
-        num_heads=12,
-        pos_embed='perceptron',
-        norm_name='instance',
-        conv_block=True,
-        res_block=True,
-        dropout_rate=0.0,
+    model = uniformerv2_b16(
+        input_resolution=128,
+        pretrained=False,
+        t_size=128, backbone_drop_path_rate=0.2, drop_path_rate=0.4,
+        dw_reduction=1.5,
+        no_lmhra=True,
+        temporal_downsample=False,
+        num_classes=4
     )
+    # model = UNETR(
+    #     in_channels=4,
+    #     out_channels=2,
+    #     img_size=(128, 128, 128),
+    #     num_classes=4,
+    #     feature_size=16,
+    #     hidden_size=768,
+    #     mlp_dim=3072,
+    #     num_heads=12,
+    #     pos_embed='perceptron',
+    #     norm_name='instance',
+    #     conv_block=True,
+    #     res_block=True,
+    #     dropout_rate=0.0,
+    # )
 
     print(model.state_dict().keys())
     model.to(device)
@@ -111,8 +111,8 @@ def train(device, args):
 
     model.zero_grad()
     eval_results = []
-    train_preds, train_labels = [], []
     for epoch in range(args.start_epoch, args.epochs):
+        train_preds, train_labels = [], []
         losses = AverageMeter()
         model.train()
         for step, (img, target) in enumerate(train_loader):
@@ -133,9 +133,11 @@ def train(device, args):
             loss = criterion(output, target.long())
             loss.backward()
             losses.update(loss.item(), img.size(0))
+
             if step % args.print_freq == 0:
                 logger.info(
-                    f"Epoch: [{epoch}/{args.epochs}][{step}/{len(train_loader)}], lr: {optimizer.param_groups[-1]['lr']:.5f} \t loss = {losses.val:.4f}({losses.avg:.4f})")
+                    f"Epoch: [{epoch}/{args.epochs}][{step}/{len(train_loader)}], lr: {optimizer.param_groups[-1]['lr']:.8f} \t loss = {losses.val:.4f}({losses.avg:.4f})")
+
 
             optimizer.step()
             optimizer.zero_grad()
