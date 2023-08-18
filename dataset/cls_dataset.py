@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from dataset.transform import *
 
+
 class ImageInfo:
     def __init__(self, row):
         self._data = row
@@ -59,7 +60,7 @@ def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data
 
     # 将数据分为训练集和测试集
     train_imgs, test_imgs, train_labels, test_labels = train_test_split(imgs_path, img_label, test_size=0.2,
-                                                                        random_state=42, stratify=img_label)
+                                                                        random_state=3407, stratify=img_label)
 
     # 将训练集和测试集的数据分别写入txt文件
     with open('train_patients.txt', 'w') as f:
@@ -234,8 +235,8 @@ class ClsDataset(Dataset):
                 # # 把最后一维的通道数放在第一维
                 # img = np.transpose(img, (3, 0, 1, 2))
                 img_list.append(img)
-                # i+=1
-                # if i==2:
+                # i += 1
+                # if i == 1:
                 #     break
         # img = np.array(img_list)
         # 把在通道维度上将四个模态的影像堆叠在一起，形成一个新的多通道影像，每个影像都素
@@ -279,7 +280,3 @@ if __name__ == '__main__':
     # img = nib.Nifti1Image(one_batch[0, 0, :, :, :], np.eye(4))
     # nib.save(img, 'test.nii.gz')
     # print(one_batch.shape)
-
-
-
-

@@ -12,6 +12,9 @@ import torch.distributed as dist
 
 import sys
 from pathlib import Path
+
+from dataset.cls_dataset import ClsDataset
+from dataset.transform import RandomAugmentation, RandomNoise, Scale, Resize
 from utils.util import plot_roc
 from utils.util import plot_confusion_matrix
 from models.resnet import generate_model
@@ -26,20 +29,30 @@ if str(ROOT) not in sys.path:
 from utils import init_logger, torch_distributed_zero_first, AverageMeter, distributed_concat
 from utils import get_scheduler, parser
 
-from dataset import ClsDataset, train_transform, val_transform
-from models import ClsModel
+import glob
+import os
+import sys
+from pathlib import Path
+
+import numpy as np
+import torch.backends.cudnn as cudnn
+import torch.optim
+import tqdm
+from torch.utils.tensorboard import SummaryWriter
 
 
-def evaluate(rank, local_rank, device, args):
+
+def evaluate(local_rank, device, args):
     check_rootfolders()
-    logger = init_logger(log_file=args.output + f'/log', rank=rank)
+    logger = init_logger(log_file=args.output + f'/log')
 
     with torch_distributed_zero_first(rank):
         val_dataset = ClsDataset(
-            list_file=args.val_list
-        )
+        list_file=args.val_list,
+        transform=[Resize((128, 128, 128))]
+    )
 
-    val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, rank=rank, shuffle=False)
+    val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False)
 
     val_loader = torch.utils.data.DataLoader(
         val_dataset,
@@ -151,6 +164,7 @@ def distributed_init(backend="gloo", port=None):
 if __name__ == '__main__':
     args = parser.parse_args()
     distributed_init(backend=args.backend)
+    os.environ["RANK"]= '0'
     rank = int(os.environ["RANK"])
     local_rank = int(os.environ["LOCAL_RANK"])
     device = torch.device("cuda", local_rank)
@@ -159,4 +173,4 @@ if __name__ == '__main__':
 
     print(f"[init] == local rank: {local_rank}, global rank: {rank} == devices: {device}")
 
-    evaluate(rank, local_rank, device, args)
+    evaluate(local_rank, device, args)

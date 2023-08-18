@@ -36,7 +36,7 @@ parser.add_argument('--print-freq', '-p', default=20, type=int,
                     metavar='N', help='print frequency (default: 10)')
 
 
-parser.add_argument('--lr', '--learning-rate', default=0.0001, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.000001, type=float,
                     metavar='LR', help='initial learning rate')
 parser.add_argument('--lr_type', default='cosine', type=str,
                     metavar='cosine', help='learning rate type， cosine or step')

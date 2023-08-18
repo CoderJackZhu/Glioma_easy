@@ -491,7 +491,6 @@ def uniformerv2_l14_336(
 
     if pretrained:
         logger.info('load pretrained weights')
-        model_dict = torchvision.models.
         state_dict = torch.load(_MODELS["ViT-L/14_336"], map_location='cpu')
         load_state_dict(model, state_dict)
     return model.eval()
