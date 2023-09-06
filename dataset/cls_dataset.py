@@ -225,10 +225,16 @@ class ClsDataset(Dataset):
         path_dir = os.listdir(img_path)
         path_dir.sort()
         # i = 0
+        # 只读取一个影像
+        # path_dir = path_dir[3:4]
+        # print(path_dir)
         for file in path_dir:
             if file.endswith('.nii.gz'):
                 img = nib.load(os.path.join(img_path, file)).get_fdata()
                 img = np.array(img)
+                # 把最后一维的通道数放在第一维
+                img = np.transpose(img, (2, 0, 1))
+                # print(img.shape)
                 if self.transform is not None:
                     for transform in self.transform:
                         img = transform(img)
@@ -251,16 +257,16 @@ class ClsDataset(Dataset):
 
 
 if __name__ == '__main__':
-    split_train_test(
-        glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages')
+    # split_train_test(
+    #     glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages')
     # # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
-    # test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128))])
+    test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128))])
     # #
     # # for k, v in train_dataset:
     # #     print('Training:', k, v)
     # #
-    # # for k, v in test_dataset:
-    # #     print('Testing:', k, v)
+    for k, v in test_dataset:
+        print('Testing:', k, v)
     #
     # # train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=0)
     # test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0)
