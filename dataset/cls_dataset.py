@@ -226,8 +226,8 @@ class ClsDataset(Dataset):
         path_dir.sort()
         # i = 0
         # 只读取一个影像
-        # path_dir = path_dir[3:4]
-        # print(path_dir)
+        path_dir = path_dir[:1]
+        print(path_dir)
         for file in path_dir:
             if file.endswith('.nii.gz'):
                 img = nib.load(os.path.join(img_path, file)).get_fdata()
@@ -240,6 +240,7 @@ class ClsDataset(Dataset):
                         img = transform(img)
                 # # 把最后一维的通道数放在第一维
                 # img = np.transpose(img, (3, 0, 1, 2))
+                print(img.shape)
                 img_list.append(img)
                 # i += 1
                 # if i == 1:
@@ -257,8 +258,8 @@ class ClsDataset(Dataset):
 
 
 if __name__ == '__main__':
-    # split_train_test(
-    #     glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages')
+    split_train_test(
+        glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images')
     # # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
     # test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128))])
     # #
