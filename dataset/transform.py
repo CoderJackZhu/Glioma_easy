@@ -5,6 +5,8 @@ import SimpleITK as sitk
 import numpy as np
 import scipy.ndimage
 import random
+import tqdm
+from pathlib import Path
 
 class MedicalImageScaler:
     def __init__(self, scale_factors):
@@ -441,74 +443,6 @@ class PatchRandomAugmentation(object):
 
 
 
-
-
-def get_max_3d_ROI(source_dir, mask_file, target_dir):
-    """
-    对于源目录下的所有3D图像，根据掩码文件获取最大的ROI，并将其保存到目标目录下。
-    """
-    source_dir = Path(source_dir)
-    target_dir = Path(target_dir)
-    target_dir.mkdir(parents=True, exist_ok=True)
-
-    # 读取掩码文件
-    mask = sitk.ReadImage(mask_file)
-
-    # 获取掩码的最大ROI
-    max_ROI = get_max_ROI(mask)
-
-    # 遍历源目录下的所有3D图像
-    for image_file in tqdm.tqdm(source_dir.glob('*.nii.gz')):
-        # 读取3D图像
-        image = sitk.ReadImage(str(image_file))
-
-        # 裁剪3D图像
-        cropped_image = crop_image(image, max_ROI)
-
-        # 保存裁剪后的3D图像
-        target_file = target_dir / image_file.name
-        sitk.WriteImage(cropped_image, str(target_file))
-
-
-def get_max_ROI(mask):
-    """
-    获取3DMRI图像的最大ROI
-    """
-    # 获取掩码的最大连通域
-    max_connected = get_max_connected(mask)
-
-    # 获取最大连通域的最大边界框
-    max_ROI = get_bounding_box(max_connected)
-
-    return max_ROI
-
-
-def get_max_connected(mask):
-    """
-    获取掩码的最大连通域
-    """
-    # 获取掩码的所有连通域
-    connected_filter = sitk.ConnectedComponentImageFilter()
-    connected_mask = connected_filter.Execute(mask)
-
-    # 获取连通域的面积
-    label_shape_filter = sitk.LabelShapeStatisticsImageFilter()
-    label_shape_filter.Execute(connected_mask)
-    label_areas = label_shape_filter.GetPhysicalSize()
-
-    # 获取面积最大的连通域
-    max_label = max(label_areas.keys(), key=lambda label: label_areas[label])
-    max_connected = (connected_mask == max_label)
-
-    return max_connected
-
-
-def get_bounding_box(max_connected):
-    """
-    获取最大连通域的最大边界框
-    """
-
-
 # if __name__ == '__main__':
 #     img_nii_gz_path = "./test_T1.nii.gz"
 #     arr_img = load_nii_gz_as_array(img_nii_gz_path)
@@ -519,11 +453,7 @@ def get_bounding_box(max_connected):
 #     arr_img = random_augmentation(arr_img,  (16, 16, 16), (0.75, 1.25), (0.7, 1.5), 1)
 #     write_array_as_nii_gz(arr_img, "test.nii.gz")
 
-if __name__ == '__main__':
-    img_nii_gz_path = "./test_T1.nii.gz"
-    arr_img = load_nii_gz_as_array(img_nii_gz_path)
-    arr_img = random_augmentation(arr_img, (16, 16, 16), (0.75, 1.25), (0.7, 1.5), 1)
-    write_array_as_nii_gz(arr_img, "test.nii.gz")
+
 
 
 

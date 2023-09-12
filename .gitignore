@@ -1,3 +1,5 @@
 .idea
 *.pth
+*.pyth
 outputs/
+*.nii.gz
