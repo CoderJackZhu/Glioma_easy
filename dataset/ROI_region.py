@@ -9,6 +9,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
+from scipy.ndimage import zoom
 
 
 #
@@ -184,6 +185,20 @@ def crop_by_intensity(img):
     return new_img
 
 
+def resize(img, shape, mode='constant', orig_shape=(240, 240, 155)):
+    """
+    Wrapper for scipy.ndimage.zoom suited for MRI images.
+    """
+    assert len(shape) == 3, "Can not have more than 3 dimensions"
+    factors = (
+        shape[-3] / orig_shape[0],
+        shape[-2] / orig_shape[1],
+        shape[-1] / orig_shape[2]
+    )
+
+    # Resize to the given shape
+    return zoom(img, factors, mode=mode)
+
 def crop_a(image, z):
     ls = []
     start = 0
@@ -300,7 +315,11 @@ def crop_roi(img_file, mask_file, save_path):
     saveimg = saveimg[:, start:end + 1, :]
     start, end = crop_c(pre_maskarray, y)
     saveimg = saveimg[:, :, start:end + 1]
+
+    # resize
     saveimg = sitk.GetImageFromArray(saveimg)
+    saveimg.SetDirection(new_direction)
+    saveimg.SetOrigin(img.GetOrigin())
     saveimg.SetSpacing(spacing)
     resize_img = resize_image_itk(saveimg, (128, 128, 128), resamplemethod=sitk.sitkLinear)
 
@@ -312,7 +331,7 @@ def crop_roi(img_file, mask_file, save_path):
     nor_resize_img.SetOrigin(resize_img.GetOrigin())
     nor_resize_img.SetDirection(resize_img.GetDirection())
 
-    sitk.WriteImage(saveimg, os.path.join(save_path, os.path.basename(img_file)))
+    sitk.WriteImage(nor_resize_img, os.path.join(save_path, os.path.basename(img_file)))
 
 
 def batch_get_roi(img_dir, mask_dir, save_path):
@@ -364,6 +383,6 @@ if __name__ == '__main__':
     # img = crop_by_intensity(sitk.ReadImage("F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz")
     #                         )
     # sitk.WriteImage(img, "F:/Code/Medical/Glioma_easy/test_data_out/test2.nii.gz")
-    crop_roi("F:/Code/Medical/Glioma_easy/test_data/Gliomas_00005_20181117/Gliomas_00005_20181117_T1.nii.gz",
-             "F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz",
+    crop_roi("F:/Code/Medical/Glioma_easy/test_data/Gliomas_00012_20190906/Gliomas_00012_20190906_T1.nii.gz",
+             "F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00012_20190906.nii.gz",
              "F:/Code/Medical/Glioma_easy/test_data_out")
