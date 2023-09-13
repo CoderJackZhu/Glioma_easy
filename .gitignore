@@ -3,3 +3,9 @@
 *.pyth
 outputs/
 *.nii.gz
+events.out.tfevents.*
+flair_outputs/
+all_roi_outputs/
+t1c_outputs/
+t2_outputs/
+flair_roi_outputs/

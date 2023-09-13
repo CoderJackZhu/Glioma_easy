@@ -144,7 +144,7 @@ def resize(img, shape, mode='constant', orig_shape=(240, 240, 155)):
 
 
 class Resize(object):
-    def __init__(self, shape, mode='constant', orig_shape=(155, 240, 240)):
+    def __init__(self, shape, mode='constant', orig_shape=(128, 128, 128)):
         self.shape = shape
         self.mode = mode
         self.orig_shape = orig_shape

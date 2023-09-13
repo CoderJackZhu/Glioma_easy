@@ -19,7 +19,6 @@ from utils.util import plot_roc
 from utils.util import plot_confusion_matrix
 from models.resnet import generate_model
 
-
 FILE = Path(__file__).resolve()
 
 ROOT = FILE.parents[1]
@@ -39,7 +38,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 import tqdm
 from torch.utils.tensorboard import SummaryWriter
-
+from models import UNETR, uniformerv2_b16
 
 
 def evaluate(local_rank, device, args):
@@ -48,9 +47,9 @@ def evaluate(local_rank, device, args):
 
     with torch_distributed_zero_first(rank):
         val_dataset = ClsDataset(
-        list_file=args.val_list,
-        transform=[Resize((128, 128, 128))]
-    )
+            list_file=args.val_list,
+            transform=[Resize((128, 128, 128))]
+        )
 
     val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False)
 
@@ -63,7 +62,17 @@ def evaluate(local_rank, device, args):
     print('val_loader is ready!!!')
 
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
-    model = generate_model(model_depth=args.model_depth)
+    # model = generate_model(model_depth=args.model_depth)
+    model = uniformerv2_b16(
+        in_channels=4,
+        input_resolution=128,
+        pretrained=False,
+        t_size=128, backbone_drop_path_rate=0.2, drop_path_rate=0.4,
+        dw_reduction=1.5,
+        no_lmhra=True,
+        temporal_downsample=False,
+        num_classes=4
+    )
 
     if args.tune_from and os.path.exists(args.tune_from):
         print(f'loading model from {args.tune_from}')
@@ -163,8 +172,15 @@ def distributed_init(backend="gloo", port=None):
 
 if __name__ == '__main__':
     args = parser.parse_args()
+    # 设置用第1块卡
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+    os.environ["RANK"] = '0'
+    os.environ["WORLD_SIZE"] = '1'
+    os.environ["LOCAL_RANK"] = '0'
+    os.environ["MASTER_ADDR"] = 'localhost'
+    os.environ["MASTER_PORT"] = '12355'
     distributed_init(backend=args.backend)
-    os.environ["RANK"]= '0'
+
     rank = int(os.environ["RANK"])
     local_rank = int(os.environ["LOCAL_RANK"])
     device = torch.device("cuda", local_rank)
