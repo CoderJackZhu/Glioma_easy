@@ -226,7 +226,7 @@ class ClsDataset(Dataset):
         path_dir.sort()
         # i = 0
         # 只读取一个影像
-        # path_dir = path_dir[:1]
+        path_dir = path_dir[3:4]
         # print(path_dir)
         for file in path_dir:
             if file.endswith('.nii.gz'):
@@ -258,8 +258,8 @@ class ClsDataset(Dataset):
 
 
 if __name__ == '__main__':
-    # split_train_test(
-    #     glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images')
+    split_train_test(
+        glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages')
     # # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
     test_dataset = ClsDataset(list_file='test_patients.txt')
     #
@@ -287,5 +287,5 @@ if __name__ == '__main__':
     # img = nib.Nifti1Image(one_batch[0, 0, :, :, :], np.eye(4))
     # nib.save(img, 'test.nii.gz')
     # print(one_batch.shape)
-    img = nib.load('F:\\Code\\Medical\\Glioma_easy\\test_data_out\\Gliomas_00012_20190906_T1.nii.gz').get_fdata()
-    print(img.shape)
+    # img = nib.load('F:\\Code\\Medical\\Glioma_easy\\test_data_out\\Gliomas_00012_20190906_T1.nii.gz').get_fdata()
+    # print(img.shape)
