@@ -80,7 +80,7 @@ def train(device, args):
         dw_reduction=1.5,
         no_lmhra=True,
         temporal_downsample=False,
-        num_classes=4
+        num_classes=args.num_classes
     )
     # model = UNETR(
     #     in_channels=4,

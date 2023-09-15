@@ -39,11 +39,17 @@ def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data
     labels = np.delete(labels, np.where(labels == 'nan'))
     labels = np.array(labels, dtype=float)
 
-    # 把标签更改为0，1，2，3
+    # # 把标签更改为0，1，2，3
+    # labels[np.where(labels == 1)] = 0
+    # labels[np.where(labels == 2)] = 1
+    # labels[np.where(labels == 3)] = 2
+    # labels[np.where(labels == 4)] = 3
+
+    # 把前三类标签合并为一类，最后一类，为二分类问题
     labels[np.where(labels == 1)] = 0
-    labels[np.where(labels == 2)] = 1
-    labels[np.where(labels == 3)] = 2
-    labels[np.where(labels == 4)] = 3
+    labels[np.where(labels == 2)] = 0
+    labels[np.where(labels == 3)] = 0
+    labels[np.where(labels == 4)] = 1
 
     # 将数据分为训练集和测试集
     # train_patients, test_patients, train_labels, test_labels = train_test_split(patients, labels, test_size=0.2,
@@ -226,7 +232,7 @@ class ClsDataset(Dataset):
         path_dir.sort()
         # i = 0
         # 只读取一个影像
-        path_dir = path_dir[:1]
+        path_dir = path_dir[1:2]
         # print(path_dir)
         for file in path_dir:
             if file.endswith('.nii.gz'):

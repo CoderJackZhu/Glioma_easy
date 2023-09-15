@@ -5,7 +5,7 @@ import argparse
 parser = argparse.ArgumentParser(description="PyTorch implementation of image classification")
 
 # ========================= Data Configs ==========================
-parser.add_argument('--num_classes', type=int, default=4, help='the numbers of the image classification task')
+parser.add_argument('--num_classes', type=int, default=2, help='the numbers of the image classification task')
 parser.add_argument('--input_size', default=224, type=int, help="the input feature dimension for the ")
 parser.add_argument('--train_list', default='/media/spgou/DATA/ZYJ/Glioma_easy/dataset/train_patients.txt', type=str, help='the path of training samples text file')
 parser.add_argument('--val_list', default='/media/spgou/DATA/ZYJ/Glioma_easy/dataset/test_patients.txt', type=str, help='the path of validation samples text file')
@@ -16,7 +16,7 @@ parser.add_argument('--val_list', default='/media/spgou/DATA/ZYJ/Glioma_easy/dat
 parser.add_argument('--model_name', type=str, default="resnet50")
 parser.add_argument('--model_depth', type=int, default=34, help='the depth of the model')
 parser.add_argument('--is_pretrained',default=False, action="store_true", help='using imagenet pretrained model')
-parser.add_argument('--tune_from', type=str, default='/media/spgou/DATA/ZYJ/Glioma_easy/flair_roi_outputs/precision_0.5805_num_55/epoch_55.pth', help='fine-tune from checkpoint')
+parser.add_argument('--tune_from', type=str, default='/media/spgou/DATA/ZYJ/Glioma_easy/t1_outputs/precision_0.5632_num_115/epoch_115.pth', help='fine-tune from checkpoint')
 parser.add_argument('--focal-loss', default=False, action="store_true")
 parser.add_argument('--label-smooth', default=False, action="store_true")
 parser.add_argument('--resume', type=str, default='', help='resume from checkpoint')
@@ -24,7 +24,7 @@ parser.add_argument('--dropout', type=float, default=0.5)
 
 
 # ========================= Learning Configs ==========================
-parser.add_argument('--epochs', default=500, type=int, metavar='N',
+parser.add_argument('--epochs', default=400, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('-b', '--batch-size', default=2, type=int,
                     metavar='N', help='mini-batch size')
@@ -36,7 +36,7 @@ parser.add_argument('--print-freq', '-p', default=20, type=int,
                     metavar='N', help='print frequency (default: 10)')
 
 
-parser.add_argument('--lr', '--learning-rate', default=0.0001, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.00001, type=float,
                     metavar='LR', help='initial learning rate')
 parser.add_argument('--lr_type', default='cosine', type=str,
                     metavar='cosine', help='learning rate type， cosine or step')
@@ -61,7 +61,7 @@ parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
 
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--output', type=str, default='./results/flair_roi_result', help='save dir for logs and outputs')
+parser.add_argument('--output', type=str, default='./all_roi_outputs_cls2', help='save dir for logs and outputs')
 
 
 parser.add_argument('--backend', default='nccl', type=str, help='Pytorch DDP backend, gloo or nccl')
