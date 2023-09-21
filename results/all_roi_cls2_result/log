@@ -1,0 +1,84 @@
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Drop path rate: 0.0
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Drop path rate: 0.0181818176060915
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Drop path rate: 0.036363635212183
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Drop path rate: 0.05454545468091965
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Drop path rate: 0.072727270424366
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Drop path rate: 0.09090908616781235
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Drop path rate: 0.10909091681241989
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Drop path rate: 0.12727272510528564
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:03 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Drop path rate: 0.1454545557498932
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Drop path rate: 0.16363637149333954
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Drop path rate: 0.1818181872367859
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Drop path rate: 0.20000000298023224
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Use checkpoint: False
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Checkpoint number: [0]
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Drop path rate: 0.0
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Drop path rate: 0.13333334028720856
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Drop path rate: 0.2666666507720947
+2023/09/16 12:49:04 - INFO - models.uniformerv2_model -   Drop path rate: 0.4000000059604645
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.0
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.0181818176060915
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.036363635212183
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.05454545468091965
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.072727270424366
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.09090908616781235
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.10909091681241989
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.12727272510528564
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.1454545557498932
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.16363637149333954
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.1818181872367859
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.20000000298023224
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   No L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Double L_MHRA: True
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Use checkpoint: False
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Checkpoint number: [0]
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.0
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.13333334028720856
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.2666666507720947
+2023/09/16 12:51:17 - INFO - models.uniformerv2_model -   Drop path rate: 0.4000000059604645

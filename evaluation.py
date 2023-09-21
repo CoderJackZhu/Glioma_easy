@@ -48,7 +48,9 @@ def evaluate(local_rank, device, args):
     with torch_distributed_zero_first(rank):
         val_dataset = ClsDataset(
             list_file=args.val_list,
-            transform=[Resize((128, 128, 128), orig_shape=(155, 240, 240))]
+            transform=[Resize((128, 128, 128)
+                              # , orig_shape=(155, 240, 240)
+                              )]
         )
 
     val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False)
@@ -64,14 +66,14 @@ def evaluate(local_rank, device, args):
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
     # model = generate_model(model_depth=args.model_depth)
     model = uniformerv2_b16(
-        in_channels=1,
+        in_channels=4,
         input_resolution=128,
         pretrained=False,
         t_size=128, backbone_drop_path_rate=0.2, drop_path_rate=0.4,
         dw_reduction=1.5,
         no_lmhra=True,
         temporal_downsample=False,
-        num_classes=4
+        num_classes=args.num_classes
     )
 
     if args.tune_from and os.path.exists(args.tune_from):

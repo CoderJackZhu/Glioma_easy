@@ -64,6 +64,10 @@ def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data
             imgs_path.append(os.path.join(glioma_dir, dir))
             img_label.append(labels[np.where(patients == patient_id)[0][0]])
 
+    # 输出低级别和高级别的数量
+    print('Low grade: ', len(np.where(np.array(img_label) == 0)[0]))
+    print('High grade: ', len(np.where(np.array(img_label) == 1)[0]))
+
     # 将数据分为训练集和测试集
     train_imgs, test_imgs, train_labels, test_labels = train_test_split(imgs_path, img_label, test_size=0.2,
                                                                         random_state=3407, stratify=img_label)
@@ -232,7 +236,7 @@ class ClsDataset(Dataset):
         path_dir.sort()
         # i = 0
         # 只读取一个影像
-        path_dir = path_dir[1:2]
+        # path_dir = path_dir[1:2]
         # print(path_dir)
         for file in path_dir:
             if file.endswith('.nii.gz'):

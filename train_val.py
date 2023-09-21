@@ -73,7 +73,7 @@ def train(device, args):
     # model = generate_model(model_depth=args.model_depth)
     # model = MultiModalCNN(num_modalities=2, input_channels=4, hidden_channels=64,  num_classes=4)
     model = uniformerv2_b16(
-        in_channels=1,
+        in_channels=4,
         input_resolution=128,
         pretrained=False,
         t_size=128, backbone_drop_path_rate=0.2, drop_path_rate=0.4,
