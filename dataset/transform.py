@@ -9,6 +9,7 @@ import tqdm
 from pathlib import Path
 
 
+
 class MedicalImageScaler:
     def __init__(self, scale_factors):
         """
@@ -161,16 +162,17 @@ class Resize(object):
             img = np.stack([resize(img[i, :, :, :], self.shape, self.mode, self.orig_shape) for i in range(img.shape[0])], axis=0)
         else:
             raise ValueError(f"Unsupported shape {img.shape}")
+        return img
 
 
-def random_augmentation(arr_img, shift_range, scale_range, gamma_range, p=0.3):
-    arr_img = random_gamma_transformation(arr_img, gamma_range, p)
+def random_augmentation(arr_img, shift_range, scale_range, gamma_range, p):
+    arr_img = random_gamma_transformation(arr_img, gamma_range, 0.15)
     arr_img = random_flip(arr_img, p)
     arr_img = random_permute(arr_img, p)
-    arr_img = random_rotate(arr_img, angle_range=3, p=p)
+    arr_img = random_rotate(arr_img, angle_range=30, p=0.2)
     arr_img = random_shift(arr_img, shift_range, p)
-    arr_img = random_scale(arr_img, scale_range, p)
-    arr_img = random_noise(arr_img, p)
+    # arr_img = random_scale(arr_img, scale_range, p)
+    arr_img = random_noise(arr_img, 0.15)
     return arr_img
 
 
@@ -219,21 +221,20 @@ def random_shift(arr_img, shift_range, p):
             random.uniform(-shift_y_range, shift_y_range), \
             random.uniform(-shift_z_range, shift_z_range)
         shift_zyx = (shift_z, shift_y, shift_x)
-        arr_img = shift(arr_img, shift_zyx, order=3)
+        arr_img = shift_img(arr_img, shift_zyx, order=3)
     return arr_img
 
 
-def shift(arr_img, shift, order):
+def shift_img(arr_img, shift_zyx, order):
     if len(arr_img.shape) == 3:
         if order == 0:
             cval = 0
         else:
             cval = np.percentile(arr_img, 1)
-        arr_img = scipy.ndimage.shift(arr_img, shift=shift, cval=cval, order=order)
+        arr_img = scipy.ndimage.shift(arr_img, shift=shift_zyx, cval=cval, order=order)
         return arr_img
     elif len(arr_img.shape) == 4:
-        for i in range(arr_img.shape[0]):
-            arr_img[i, :, :, :] = shift(arr_img[i, :, :, :], shift, order)
+        arr_img = np.stack([shift_img(arr_img[i, :, :, :], shift_zyx, order) for i in range(arr_img.shape[0])], axis=0)
         return arr_img
 
 def random_flip(arr_img, p):
@@ -274,7 +275,8 @@ def permute(arr_img, permution):
 
 def random_noise(arr_image, p):
     if random.random() < p:
-        arr_image = noise(arr_image)
+        # arr_image = noise(arr_image)
+        arr_image = gaussian_noise(arr_image)
     return arr_image
 
 
@@ -292,6 +294,11 @@ def noise(arr_image):
     else:
         raise ValueError("arr_image must be 3D or 4D")
 
+
+def gaussian_noise(arr_image):
+    # 使用高斯噪声，设置均值为0, 方差为0到0.1的均匀分布
+    return arr_image + np.random.normal(0, np.random.uniform(0, 0.1), arr_image.shape)
+    # TODO 通道3和4
 
 def random_scale(arr_image, scale_factor_range, p):
     if random.random() < p:
@@ -337,7 +344,7 @@ def scale(arr_image, scale_factor, order=3):
     return arr_image
 
 
-def random_gamma_transformation(arr_image, gamma_range=(0.7, 1.5), p=0.5):
+def random_gamma_transformation(arr_image, gamma_range=(0.7, 1.5), p=0.15):
     if random.random() < p:
         gamma = random.uniform(gamma_range[0], gamma_range[1])
         arr_image = gamma_transformation(arr_image, gamma)
@@ -391,40 +398,40 @@ class RandomScale(object):
         return random_scale(arr_img, self.scale_range, self.order)
 
 
-class RandomGammaTransformation(object):
-    """
-    把random_gamma_transformation函数封装成类，方便transform.Compose使用
-    """
-
-    def __init__(self, gamma_range):
-        self.gamma_range = gamma_range
-
-    def __call__(self, arr_img):
-        return random_gamma_transformation(arr_img, self.gamma_range)
-
-
-class RandomFlip(object):
-    """
-    把random_flip函数封装成类，方便transform.Compose使用
-    """
-
-    def __init__(self):
-        pass
-
-    def __call__(self, arr_img):
-        return random_flip(arr_img)
+# class RandomGammaTransformation(object):
+#     """
+#     把random_gamma_transformation函数封装成类，方便transform.Compose使用
+#     """
+#
+#     def __init__(self, gamma_range):
+#         self.gamma_range = gamma_range
+#
+#     def __call__(self, arr_img):
+#         return random_gamma_transformation(arr_img, self.gamma_range)
 
 
-class RandomPermute(object):
-    """
-    把random_permute函数封装成类，方便transform.Compose使用
-    """
+# class RandomFlip(object):
+#     """
+#     把random_flip函数封装成类，方便transform.Compose使用
+#     """
+#
+#     def __init__(self):
+#         pass
+#
+#     def __call__(self, arr_img):
+#         return random_flip(arr_img)
 
-    def __init__(self):
-        pass
 
-    def __call__(self, arr_img):
-        return random_permute(arr_img)
+# class RandomPermute(object):
+#     """
+#     把random_permute函数封装成类，方便transform.Compose使用
+#     """
+#
+#     def __init__(self):
+#         pass
+#
+#     def __call__(self, arr_img):
+#         return random_permute(arr_img)
 
 
 class RandomRotate(object):

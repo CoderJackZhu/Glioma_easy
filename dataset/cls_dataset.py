@@ -270,15 +270,32 @@ class ClsDataset(Dataset):
 
 if __name__ == '__main__':
     split_train_test(
-        glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images')
-    # # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
-    # test_dataset = ClsDataset(list_file='test_patients.txt')
+        glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images_expand')
+    # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
+    test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128)),
+                                                                        RandomAugmentation((16, 16, 16), (0.8, 1.2),
+                                                                                           (0.8, 1.2)),
+                                                                        ])
     #
     # for k, v in train_dataset:
     #     print('Training:', k, v)
-    #
-    # for k, v in test_dataset:
-    #     print('Testing:', k, v)
+    save_dir = './test_out'
+
+    j = 0
+    for k, v in test_dataset:
+        print('Testing:', k.shape, v)
+        # 把k按照第一个通道的维度拆分成四个模态，并保存为nii文件
+        # 每个k建立一个文件夹
+        save_file_dir = os.path.join(save_dir, str(j))
+        os.makedirs(save_file_dir, exist_ok=True)
+        for i in range(k.shape[0]):
+            img = nib.Nifti1Image(k[i, :, :, :], np.eye(4))
+            nib.save(img, os.path.join(save_file_dir, str(i) + '.nii.gz'))
+
+        j += 1
+
+
+
 
     # # train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=0)
     # test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0)

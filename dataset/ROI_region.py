@@ -359,7 +359,7 @@ def crop_roi_expand(img_file, mask_file, save_file, expansion=5):
 
     # resize
     saveimg = sitk.GetImageFromArray(saveimg)
-    print(saveimg.GetSize())
+    # print(saveimg.GetSize())
     saveimg.SetDirection(new_direction)
     saveimg.SetOrigin(img.GetOrigin())
     saveimg.SetSpacing(spacing)
@@ -403,7 +403,7 @@ def batch_get_roi(img_dir, mask_dir, save_path):
             if file.endswith(".nii.gz"):
                 img_file = os.path.join(patient, file)
                 save_file = os.path.join(patient_save, file)
-                crop_roi(img_file, patient_mask, save_file)
+                crop_roi_expand(img_file, patient_mask, save_file)
 
 
 if __name__ == '__main__':
@@ -428,11 +428,11 @@ if __name__ == '__main__':
     # img = crop_by_intensity(sitk.ReadImage("F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz")
     #                         )
     # sitk.WriteImage(img, "F:/Code/Medical/Glioma_easy/test_data_out/test2.nii.gz")
-    crop_roi("F:/Code/Medical/Glioma_easy/test_data/Gliomas_00005_20181117/Gliomas_00005_20181117_T1.nii.gz",
-             "F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz",
-             "F:/Code/Medical/Glioma_easy/test_data_out/test1.nii.gz")
-    crop_roi_expand("F:/Code/Medical/Glioma_easy/test_data/Gliomas_00005_20181117/Gliomas_00005_20181117_T1.nii.gz",
-             "F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz",
-             "F:/Code/Medical/Glioma_easy/test_data_out/test2.nii.gz")
-    # batch_get_roi("/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages", "/media/spgou/DATA/ZYJ/Dataset/captk_before_data_net_seg",
-    #               "/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images")
+    # crop_roi("F:/Code/Medical/Glioma_easy/test_data/Gliomas_00005_20181117/Gliomas_00005_20181117_T1.nii.gz",
+    #          "F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz",
+    #          "F:/Code/Medical/Glioma_easy/test_data_out/test1.nii.gz")
+    # crop_roi_expand("F:/Code/Medical/Glioma_easy/test_data/Gliomas_00005_20181117/Gliomas_00005_20181117_T1.nii.gz",
+    #          "F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz",
+    #          "F:/Code/Medical/Glioma_easy/test_data_out/test2.nii.gz")
+    batch_get_roi("/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages", "/media/spgou/DATA/ZYJ/Dataset/captk_before_data_net_seg",
+                  "/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images_expand")
