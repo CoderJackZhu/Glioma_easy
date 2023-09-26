@@ -245,9 +245,7 @@ class ClsDataset(Dataset):
                 # 把最后一维的通道数放在第一维
                 img = np.transpose(img, (2, 0, 1))
                 # print(img.shape)
-                if self.transform is not None:
-                    for transform in self.transform:
-                        img = transform(img)
+
                 # # 把最后一维的通道数放在第一维
                 # img = np.transpose(img, (3, 0, 1, 2))
                 # print(img.shape)
@@ -258,6 +256,9 @@ class ClsDataset(Dataset):
         # img = np.array(img_list)
         # 把在通道维度上将四个模态的影像堆叠在一起，形成一个新的多通道影像，每个影像都素
         img = np.stack(img_list, axis=0)
+        if self.transform is not None:
+            for transform in self.transform:
+                img = transform(img)
         # # 将多个医学影像拼接在一起
         # img = np.concatenate(img, axis=2)
         # print(img.shape)

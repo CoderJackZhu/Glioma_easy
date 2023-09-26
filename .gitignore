@@ -3,6 +3,14 @@
 *.pyth
 outputs/
 *.nii.gz
+*/__pycache__
+*/.ipynb_checkpoints
+*/.idea
+*/.git
+*/.gitignore
+*/.DS_Store
+*/.vscode
+*/.vs
 events.out.tfevents.*
 flair_outputs/
 all_roi_outputs/

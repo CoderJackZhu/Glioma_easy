@@ -47,7 +47,9 @@ def train(device, args):
     tb_writer = SummaryWriter(log_dir=save_dir)
     val_dataset = ClsDataset(
         list_file=args.val_list,
-        transform=[Resize((128, 128, 128))]
+        transform=[Resize((128, 128, 128)),
+                   RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
+                   ]
     )
     train_dataset = ClsDataset(
         list_file=args.train_list,

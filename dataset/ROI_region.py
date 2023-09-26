@@ -263,7 +263,8 @@ def resize_image_itk(itkimage, newSize, resamplemethod=sitk.sitkNearestNeighbor)
     newSize = np.array(newSize, float)
     factor = originSize / newSize
     newSpacing = originSpacing * factor
-    newSize = newSize.astype(np.int)  # spacing肯定不能是整数
+    # spacing肯定不能是整数
+    newSize = newSize.astype(np.int32)
     resampler.SetReferenceImage(itkimage)  # 需要重新采样的目标图像
     resampler.SetSize(newSize.tolist())
     resampler.SetOutputSpacing(newSpacing.tolist())
@@ -305,6 +306,7 @@ def crop_roi(img_file, mask_file, save_file):
 
     # resize
     saveimg = sitk.GetImageFromArray(saveimg)
+    print(saveimg.GetSize())
     saveimg.SetDirection(new_direction)
     saveimg.SetOrigin(img.GetOrigin())
     saveimg.SetSpacing(spacing)
@@ -319,6 +321,62 @@ def crop_roi(img_file, mask_file, save_file):
     nor_resize_img.SetDirection(resize_img.GetDirection())
 
     sitk.WriteImage(nor_resize_img, save_file)
+
+
+
+
+def crop_roi_expand(img_file, mask_file, save_file, expansion=5):
+    img = sitk.ReadImage(img_file)
+    mask = sitk.ReadImage(mask_file)
+
+    spacing = img.GetSpacing()
+    new_direction = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+    # 根据预测的标签剪裁
+    pre_imgarray = sitk.GetArrayFromImage(img)
+    pre_maskarray = sitk.GetArrayFromImage(mask)
+    (z, x, y) = pre_maskarray.shape
+    start, end = crop_a(pre_maskarray, z)
+
+    # Expand the crop region by 'expansion' pixels
+    start = max(0, start - expansion)
+    end = min(z - 1, end + expansion)
+
+    saveimg = pre_imgarray[start:end + 1, :, :]
+    start, end = crop_b(pre_maskarray, x)
+
+    # Expand the crop region by 'expansion' pixels
+    start = max(0, start - expansion)
+    end = min(x - 1, end + expansion)
+
+    saveimg = saveimg[:, start:end + 1, :]
+    start, end = crop_c(pre_maskarray, y)
+
+    # Expand the crop region by 'expansion' pixels
+    start = max(0, start - expansion)
+    end = min(y - 1, end + expansion)
+
+    saveimg = saveimg[:, :, start:end + 1]
+
+    # resize
+    saveimg = sitk.GetImageFromArray(saveimg)
+    print(saveimg.GetSize())
+    saveimg.SetDirection(new_direction)
+    saveimg.SetOrigin(img.GetOrigin())
+    saveimg.SetSpacing(spacing)
+    resize_img = resize_image_itk(saveimg, (128, 128, 128), resamplemethod=sitk.sitkLinear)
+
+    # 标准化
+    resize_imgarr = sitk.GetArrayFromImage(resize_img)
+    nor_resize_imgarr = normalize_data(resize_imgarr)
+    nor_resize_img = sitk.GetImageFromArray(nor_resize_imgarr)
+    nor_resize_img.SetSpacing(resize_img.GetSpacing())
+    nor_resize_img.SetOrigin(resize_img.GetOrigin())
+    nor_resize_img.SetDirection(resize_img.GetDirection())
+
+    sitk.WriteImage(nor_resize_img, save_file)
+
+
+# 请确保在调用crop_roi函数时指定了expansion参数来控制向外扩展的距离
 
 
 def batch_get_roi(img_dir, mask_dir, save_path):
@@ -370,8 +428,11 @@ if __name__ == '__main__':
     # img = crop_by_intensity(sitk.ReadImage("F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz")
     #                         )
     # sitk.WriteImage(img, "F:/Code/Medical/Glioma_easy/test_data_out/test2.nii.gz")
-    # crop_roi("F:/Code/Medical/Glioma_easy/test_data/Gliomas_00005_20181117/Gliomas_00005_20181117_T1.nii.gz",
-    #          "F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz",
-    #          "F:/Code/Medical/Glioma_easy/test_data_out")
-    batch_get_roi("/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages", "/media/spgou/DATA/ZYJ/Dataset/captk_before_data_net_seg",
-                  "/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images")
+    crop_roi("F:/Code/Medical/Glioma_easy/test_data/Gliomas_00005_20181117/Gliomas_00005_20181117_T1.nii.gz",
+             "F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz",
+             "F:/Code/Medical/Glioma_easy/test_data_out/test1.nii.gz")
+    crop_roi_expand("F:/Code/Medical/Glioma_easy/test_data/Gliomas_00005_20181117/Gliomas_00005_20181117_T1.nii.gz",
+             "F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz",
+             "F:/Code/Medical/Glioma_easy/test_data_out/test2.nii.gz")
+    # batch_get_roi("/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages", "/media/spgou/DATA/ZYJ/Dataset/captk_before_data_net_seg",
+    #               "/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images")
