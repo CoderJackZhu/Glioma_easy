@@ -19,14 +19,8 @@ from models.model import ClsModel, MultiModalCNN
 from models import UNETR, uniformerv2_b16
 
 ## nnU-Net的图像增强方法
-from batchgenerators.transforms.abstract_transforms import AbstractTransform, Compose
-from batchgenerators.transforms.color_transforms import BrightnessMultiplicativeTransform, \
-    ContrastAugmentationTransform, GammaTransform
-from batchgenerators.transforms.noise_transforms import GaussianNoiseTransform, GaussianBlurTransform
-from batchgenerators.transforms.resample_transforms import SimulateLowResolutionTransform
-from batchgenerators.transforms.spatial_transforms import SpatialTransform, MirrorTransform
-from batchgenerators.transforms.utility_transforms import RemoveLabelTransform, RenameTransform, NumpyToTensor
-
+from dataset.transform import GaussianNoise, GaussianBlur, BrightnessMultiplicative, \
+    ContrastAugmentation, SimulateLowResolution, Gamma, Mirror
 
 FILE = Path(__file__).resolve()
 
@@ -66,31 +60,14 @@ def train(device, args):
     train_dataset = ClsDataset(
         list_file=args.train_list,
         transform=[Resize((128, 128, 128)),
-                   SpatialTransform(
-                       patch_size_spatial, patch_center_dist_from_border=None,
-                       do_elastic_deform=False, alpha=(0, 0), sigma=(0, 0),
-                       do_rotation=True, angle_x=rotation_for_DA['x'], angle_y=rotation_for_DA['y'],
-                       angle_z=rotation_for_DA['z'],
-                       p_rot_per_axis=1,  # todo experiment with this
-                       do_scale=True, scale=(0.7, 1.4),
-                       border_mode_data="constant", border_cval_data=0, order_data=order_resampling_data,
-                       border_mode_seg="constant", border_cval_seg=border_val_seg, order_seg=order_resampling_seg,
-                       random_crop=False,  # random cropping is part of our dataloaders
-                       p_el_per_sample=0, p_scale_per_sample=0.2, p_rot_per_sample=0.2,
-                       independent_scale_for_each_axis=False  # todo experiment with this
-                   ),
-                   GaussianNoiseTransform(p_per_sample=0.1),
-                   GaussianBlurTransform((0.5, 1.), different_sigma_per_channel=True, p_per_sample=0.2,
-                                         p_per_channel=0.5),
-                   BrightnessMultiplicativeTransform(multiplier_range=(0.75, 1.25), p_per_sample=0.15),
-                   ContrastAugmentationTransform(p_per_sample=0.15),
-                   SimulateLowResolutionTransform(zoom_range=(0.5, 1), per_channel=True,
-                                                  p_per_channel=0.5,
-                                                  order_downsample=0, order_upsample=3, p_per_sample=0.25,
-                                                  ignore_axes=ignore_axes),
-                   GammaTransform((0.7, 1.5), True, True, retain_stats=True, p_per_sample=0.1),
-                   GammaTransform((0.7, 1.5), False, True, retain_stats=True, p_per_sample=0.3),
-                   MirrorTransform(axes, prob=0.5),
+                   GaussianNoise(),
+                   GaussianBlur(),
+                   BrightnessMultiplicative(),
+                   ContrastAugmentation(),
+                   SimulateLowResolution(axes, (1.5, 1.5)),
+                   Gamma(),
+                   Gamma(invert_image=False, per_channel=True, retain_stats=True, p_per_sample=0.3),
+                   Mirror(axes),
                    ]
     )
     # [RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2), (0.8, 1.2)),
@@ -179,7 +156,6 @@ def train(device, args):
                 logger.info(
                     f"Epoch: [{epoch}/{args.epochs}][{step}/{len(train_loader)}], lr: {optimizer.param_groups[-1]['lr']:.8f} \t loss = {losses.val:.4f}({losses.avg:.4f})")
 
-
             optimizer.step()
             optimizer.zero_grad()
         scheduler.step()
@@ -213,7 +189,6 @@ def train(device, args):
 
                 labels = torch.cat(labels, dim=0)
                 predicts = torch.cat(preds, dim=0)
-
 
                 labels = labels.cpu().numpy()
                 predicts = predicts.cpu().numpy()

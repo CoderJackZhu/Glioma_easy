@@ -281,7 +281,7 @@ def random_noise(arr_image, p):
     return arr_image
 
 
-def noise(arr_image):
+def std_noise(arr_image):
     if len(arr_image == 3):
         std = np.std(arr_image)
         noise = np.random.random(arr_image.shape)
@@ -290,7 +290,7 @@ def noise(arr_image):
         return arr_image
     elif len(arr_image == 4):
         for i in range(arr_image.shape[0]):
-            arr_image[i, :, :, :] = noise(arr_image[i, :, :, :])
+            arr_image[i, :, :, :] = std_noise(arr_image[i, :, :, :])
         return arr_image
     else:
         raise ValueError("arr_image must be 3D or 4D")
@@ -509,3 +509,146 @@ class PatchRandomAugmentation(object):
 #     arr_img = random_shift(arr_img, (16, 16, 16), 1)
 #     arr_img = random_augmentation(arr_img,  (16, 16, 16), (0.75, 1.25), (0.7, 1.5), 1)
 #     write_array_as_nii_gz(arr_img, "test.nii.gz")
+
+
+## nnU-Net的图像增强方法
+from batchgenerators.transforms.abstract_transforms import AbstractTransform, Compose
+from batchgenerators.transforms.color_transforms import BrightnessMultiplicativeTransform, \
+    ContrastAugmentationTransform, GammaTransform
+from batchgenerators.transforms.noise_transforms import GaussianNoiseTransform, GaussianBlurTransform
+from batchgenerators.transforms.resample_transforms import SimulateLowResolutionTransform
+from batchgenerators.transforms.spatial_transforms import SpatialTransform, MirrorTransform
+from batchgenerators.transforms.utility_transforms import RemoveLabelTransform, RenameTransform, NumpyToTensor
+
+
+# GaussianNoiseTransform(p_per_sample=0.1),
+# GaussianBlurTransform((0.5, 1.), different_sigma_per_channel=True, p_per_sample=0.2,
+#                      p_per_channel=0.5),
+# BrightnessMultiplicativeTransform(multiplier_range=(0.75, 1.25), p_per_sample=0.15),
+# ContrastAugmentationTransform(p_per_sample=0.15),
+# SimulateLowResolutionTransform(zoom_range=(0.5, 1), per_channel=True,
+#                               p_per_channel=0.5,
+#                               order_downsample=0, order_upsample=3, p_per_sample=0.25,
+#                               ignore_axes=ignore_axes),
+# GammaTransform((0.7, 1.5), True, True, retain_stats=True, p_per_sample=0.1),
+# GammaTransform((0.7, 1.5), False, True, retain_stats=True, p_per_sample=0.3),
+# MirrorTransform(axes),
+
+class GaussianNoise(AbstractTransform):
+    def __init__(self, p_per_sample=0.1):
+        self.p_per_sample = p_per_sample
+
+    def __call__(self, img):
+        if len(img.shape) == 3:
+            img = GaussianNoiseTransform(p_per_sample=1)(img)
+        elif len(img.shape) == 4:
+            img = np.stack([GaussianNoiseTransform(p_per_sample=1)(img[i, :, :, :]) for i in range(img.shape[0])],
+                           axis=0)
+        else:
+            raise ValueError("Unsupported shape")
+        return img
+
+
+class GaussianBlur(AbstractTransform):
+    def __init__(self, p_per_sample=0.1):
+        self.p_per_sample = p_per_sample
+
+    def __call__(self, img):
+        if len(img.shape) == 3:
+            img = GaussianBlurTransform((0.5, 1.), different_sigma_per_channel=True, p_per_sample=1,
+                                        p_per_channel=0.5)(img)
+        elif len(img.shape) == 4:
+            img = np.stack([GaussianBlurTransform((0.5, 1.), different_sigma_per_channel=True, p_per_sample=1,
+                                                  p_per_channel=0.5)(img[i, :, :, :]) for i in range(img.shape[0])],
+                           axis=0)
+        else:
+            raise ValueError("Unsupported shape")
+        return img
+
+
+class BrightnessMultiplicative(AbstractTransform):
+    def __init__(self, p_per_sample=0.1):
+        self.p_per_sample = p_per_sample
+
+    def __call__(self, img):
+        if len(img.shape) == 3:
+            img = BrightnessMultiplicativeTransform(multiplier_range=(0.75, 1.25), p_per_sample=1)(img)
+        elif len(img.shape) == 4:
+            img = np.stack(
+                [BrightnessMultiplicativeTransform(multiplier_range=(0.75, 1.25), p_per_sample=1)(img[i, :, :, :]) for i
+                 in range(img.shape[0])], axis=0)
+        else:
+            raise ValueError("Unsupported shape")
+        return img
+
+
+class ContrastAugmentation(AbstractTransform):
+    def __init__(self, p_per_sample=0.1):
+        self.p_per_sample = p_per_sample
+
+    def __call__(self, img):
+        if len(img.shape) == 3:
+            img = ContrastAugmentationTransform(p_per_sample=1)(img)
+        elif len(img.shape) == 4:
+            img = np.stack(
+                [ContrastAugmentationTransform(p_per_sample=1)(img[i, :, :, :]) for i in range(img.shape[0])], axis=0)
+        else:
+            raise ValueError("Unsupported shape")
+        return img
+
+
+class SimulateLowResolution(AbstractTransform):
+    def __init__(self, p_per_sample=0.1):
+        self.p_per_sample = p_per_sample
+
+    def __call__(self, img):
+        if len(img.shape) == 3:
+            img = SimulateLowResolutionTransform(zoom_range=(0.5, 1), per_channel=True,
+                                                 p_per_channel=0.5,
+                                                 order_downsample=0, order_upsample=3, p_per_sample=1,
+                                                 ignore_axes=None)(img)
+        elif len(img.shape) == 4:
+            img = np.stack([SimulateLowResolutionTransform(zoom_range=(0.5, 1), per_channel=True,
+                                                           p_per_channel=0.5,
+                                                           order_downsample=0, order_upsample=3, p_per_sample=1,
+                                                           ignore_axes=None)(img[i, :, :, :]) for i in
+                            range(img.shape[0])], axis=0)
+        else:
+            raise ValueError("Unsupported shape")
+        return img
+
+
+class Gamma(AbstractTransform):
+    def __init__(self, p_per_sample=0.1, gamma_range=(0.7, 1.5), invert_image=True, per_channel=True,
+                 retain_stats=True):
+        self.p_per_sample = p_per_sample
+        self.gamma_range = gamma_range
+        self.invert_image = invert_image
+        self.per_channel = per_channel
+        self.retain_stats = retain_stats
+
+    def __call__(self, img):
+        if len(img.shape) == 3:
+            img = GammaTransform(self.gamma_range, self.invert_image, self.per_channel, self.retain_stats,
+                                 p_per_sample=self.p_per_sample)(img)
+        elif len(img.shape) == 4:
+            img = np.stack([GammaTransform(self.gamma_range, self.invert_image, self.per_channel, self.retain_stats,
+                                           p_per_sample=self.p_per_sample)(img[i, :, :, :]) for i in
+                            range(img.shape[0])], axis=0)
+        else:
+            raise ValueError("Unsupported shape")
+        return img
+
+
+class Mirror(AbstractTransform):
+    def __init__(self, axes):
+        self.axes = axes
+
+    def __call__(self, img):
+        if len(img.shape) == 3:
+            img = MirrorTransform(self.axes)(img)
+        elif len(img.shape) == 4:
+            img = np.stack([MirrorTransform(self.axes)(img[i, :, :, :]) for i in range(img.shape[0])], axis=0)
+        else:
+            raise ValueError("Unsupported shape")
+        return img
