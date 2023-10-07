@@ -231,3 +231,10 @@ def generate_model(model_depth, **kwargs):
         model = ResNet(Bottleneck, [3, 24, 36, 3], get_inplanes(), **kwargs)
 
     return model
+
+
+if __name__ == "__main__":
+    input = torch.randn(1, 4, 128, 128, 128)
+    model = generate_model(18)
+    output = model(input)
+    print(output.shape)

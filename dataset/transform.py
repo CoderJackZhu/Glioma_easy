@@ -9,7 +9,6 @@ import tqdm
 from pathlib import Path
 
 
-
 class MedicalImageScaler:
     def __init__(self, scale_factors):
         """
@@ -159,7 +158,8 @@ class Resize(object):
             img = resize(img, self.shape, self.mode, self.orig_shape)
         elif len(img.shape) == 4:
             # 按照第0个维度分别对每个通道进行resize
-            img = np.stack([resize(img[i, :, :, :], self.shape, self.mode, self.orig_shape) for i in range(img.shape[0])], axis=0)
+            img = np.stack(
+                [resize(img[i, :, :, :], self.shape, self.mode, self.orig_shape) for i in range(img.shape[0])], axis=0)
         else:
             raise ValueError(f"Unsupported shape {img.shape}")
         return img
@@ -237,6 +237,7 @@ def shift_img(arr_img, shift_zyx, order):
         arr_img = np.stack([shift_img(arr_img[i, :, :, :], shift_zyx, order) for i in range(arr_img.shape[0])], axis=0)
         return arr_img
 
+
 def random_flip(arr_img, p):
     if random.random() < p:
         axial_list = [(0,), (1,), (2,), (0, 1), (0, 2), (1, 2), (0, 1, 2)]
@@ -299,6 +300,7 @@ def gaussian_noise(arr_image):
     # 使用高斯噪声，设置均值为0, 方差为0到0.1的均匀分布
     return arr_image + np.random.normal(0, np.random.uniform(0, 0.1), arr_image.shape)
     # TODO 通道3和4
+
 
 def random_scale(arr_image, scale_factor_range, p):
     if random.random() < p:
@@ -496,6 +498,7 @@ class PatchRandomAugmentation(object):
 
     def __call__(self, arr_img):
         return patch_random_augmentation(arr_img, self.shift_range, self.scale_range, self.gamma_range)
+
 
 # if __name__ == '__main__':
 #     img_nii_gz_path = "./test_T1.nii.gz"
