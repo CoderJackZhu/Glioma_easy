@@ -298,8 +298,16 @@ def std_noise(arr_image):
 
 def gaussian_noise(arr_image):
     # 使用高斯噪声，设置均值为0, 方差为0到0.1的均匀分布
-    return arr_image + np.random.normal(0, np.random.uniform(0, 0.1), arr_image.shape)
-    # TODO 通道3和4
+    if len(arr_image.shape) == 3:
+        return arr_image + np.random.normal(0, np.random.uniform(0, 0.1), arr_image.shape)
+    elif len(arr_image.shape) == 4:
+        for i in range(arr_image.shape[0]):
+            arr_image[i, :, :, :] = gaussian_noise(arr_image[i, :, :, :])
+        return arr_image
+    else:
+        raise ValueError("arr_image must be 3D or 4D")
+    # return arr_image + np.random.normal(0, np.random.uniform(0, 0.1), arr_image.shape)
+
 
 
 def random_scale(arr_image, scale_factor_range, p):
@@ -465,7 +473,7 @@ class RandomNoise(object):
     把random_noise函数封装成类，方便transform.Compose使用
     """
 
-    def __init__(self, p=0.5):
+    def __init__(self, p=0.2):
         self.p = p
 
     def __call__(self, arr_img):
@@ -483,7 +491,7 @@ class RandomAugmentation(object):
         self.gamma_range = gamma_range
 
     def __call__(self, arr_img):
-        return random_augmentation(arr_img, self.shift_range, self.scale_range, self.gamma_range)
+        return random_augmentation(arr_img, self.shift_range, self.scale_range, self.gamma_range, p=0.15)
 
 
 class PatchRandomAugmentation(object):
@@ -540,9 +548,9 @@ class GaussianNoise(AbstractTransform):
 
     def __call__(self, img):
         if len(img.shape) == 3:
-            img = GaussianNoiseTransform(p_per_sample=1)(img)
+            img = GaussianNoiseTransform(p_per_sample=1)()(img)
         elif len(img.shape) == 4:
-            img = np.stack([GaussianNoiseTransform(p_per_sample=1)(img[i, :, :, :]) for i in range(img.shape[0])],
+            img = np.stack([GaussianNoiseTransform(p_per_sample=1)()(img[i, :, :, :]) for i in range(img.shape[0])],
                            axis=0)
         else:
             raise ValueError("Unsupported shape")

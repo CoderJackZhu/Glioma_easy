@@ -19,8 +19,9 @@ from models.model import ClsModel, MultiModalCNN
 from models import UNETR, uniformerv2_b16
 
 ## nnU-Net的图像增强方法
-from dataset.transform import GaussianNoise, GaussianBlur, BrightnessMultiplicative, \
-    ContrastAugmentation, SimulateLowResolution, Gamma, Mirror
+# from dataset.transform import GaussianNoise, GaussianBlur, BrightnessMultiplicative, \
+#     ContrastAugmentation, SimulateLowResolution, Gamma, Mirror
+from dataset.transform import *
 
 FILE = Path(__file__).resolve()
 
@@ -53,21 +54,15 @@ def train(device, args):
         list_file=args.val_list,
         transform=[Resize((128, 128, 128)),
                    # RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
-
                    ]
     )
     axes = (0, 1, 2)
     train_dataset = ClsDataset(
         list_file=args.train_list,
         transform=[Resize((128, 128, 128)),
-                   GaussianNoise(),
-                   GaussianBlur(),
-                   BrightnessMultiplicative(),
-                   ContrastAugmentation(),
-                   SimulateLowResolution(axes, (1.5, 1.5)),
-                   Gamma(),
-                   Gamma(invert_image=False, per_channel=True, retain_stats=True, p_per_sample=0.3),
-                   Mirror(axes),
+                   # RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
+
+                   GaussianNoise()
                    ]
     )
     # [RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2), (0.8, 1.2)),

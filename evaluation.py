@@ -175,7 +175,7 @@ def distributed_init(backend="gloo", port=None):
 if __name__ == '__main__':
     args = parser.parse_args()
     # 设置用第1块卡
-    os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     os.environ["RANK"] = '0'
     os.environ["WORLD_SIZE"] = '1'
     os.environ["LOCAL_RANK"] = '0'
