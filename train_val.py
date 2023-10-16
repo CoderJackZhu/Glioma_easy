@@ -17,6 +17,7 @@ from dataset.transform import RandomAugmentation, RandomNoise, Scale, Resize
 # from dataset.transform import MedicalImageScaler
 from models.model import ClsModel, MultiModalCNN
 from models import UNETR, uniformerv2_b16
+from models.resnet import generate_model
 
 ## nnU-Net的图像增强方法
 # from dataset.transform import GaussianNoise, GaussianBlur, BrightnessMultiplicative, \
@@ -52,17 +53,17 @@ def train(device, args):
     tb_writer = SummaryWriter(log_dir=save_dir)
     val_dataset = ClsDataset(
         list_file=args.val_list,
-        transform=[Resize((128, 128, 128)),
+        transform=[Resize((128, 128, 128), orig_shape=(155, 240, 240)),
                    # RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
                    ]
     )
     axes = (0, 1, 2)
     train_dataset = ClsDataset(
         list_file=args.train_list,
-        transform=[Resize((128, 128, 128)),
-                   # RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
+        transform=[Resize((128, 128, 128), orig_shape=(155, 240, 240)),
+                   RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
 
-                   GaussianNoise()
+                   # GaussianNoise()
                    ]
     )
     # [RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2), (0.8, 1.2)),
@@ -80,20 +81,19 @@ def train(device, args):
                                                drop_last=True)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
-
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
     # model = generate_model(model_depth=args.model_depth)
     # model = MultiModalCNN(num_modalities=2, input_channels=4, hidden_channels=64,  num_classes=4)
-    model = uniformerv2_b16(
-        in_channels=4,
-        input_resolution=128,
-        pretrained=False,
-        t_size=128, backbone_drop_path_rate=0.2, drop_path_rate=0.4,
-        dw_reduction=1.5,
-        no_lmhra=True,
-        temporal_downsample=False,
-        num_classes=args.num_classes
-    )
+    # model = uniformerv2_b16(
+    #     in_channels=4,
+    #     input_resolution=128,
+    #     pretrained=False,
+    #     t_size=128, backbone_drop_path_rate=0.2, drop_path_rate=0.4,
+    #     dw_reduction=1.5,
+    #     no_lmhra=True,
+    #     temporal_downsample=False,
+    #     num_classes=args.num_classes
+    # )
     # model = UNETR(
     #     in_channels=4,
     #     out_channels=2,
@@ -109,6 +109,7 @@ def train(device, args):
     #     res_block=True,
     #     dropout_rate=0.0,
     # )
+    model = generate_model(model_depth=args.model_depth, n_classes=args.num_classes)
 
     print(model.state_dict().keys())
     model.to(device)
@@ -137,8 +138,11 @@ def train(device, args):
             # target = target.view(-1)
             # print(target.shape)
             target = target.to(device)
-
+            # # 对多标签进行one-hot编码
+            # target = torch.zeros(target.size(0), 2).scatter_(1, target.view(-1, 1), 1)
+            # print(img.shape, target.shape)
             output = model(img)
+
             predict = torch.max(output, dim=1)[1]
             train_preds.append(predict)
             train_labels.append(target)
@@ -171,8 +175,8 @@ def train(device, args):
                     img = img.to(device)
                     # target = target.view(1, -1).expand(img.size(0), -1)
                     # 更改target维度匹配输出
-                    target = target.view(-1)
-                    target = target.to(device, dtype=torch.float32)
+                    # target = target.view(-1)
+                    target = target.to(device)
 
                     output = model(img)
                     loss = criterion(output, target.long())

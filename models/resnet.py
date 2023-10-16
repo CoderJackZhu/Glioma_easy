@@ -146,7 +146,9 @@ class ResNet(nn.Module):
                                        stride=2)
 
         self.avgpool = nn.AdaptiveAvgPool3d((1, 1, 1))
-        self.fc = nn.Linear(block_inplanes[3] * block.expansion, n_classes)
+        self.fc1 = nn.Linear(block_inplanes[3] * block.expansion, 3)
+        self.fc2 = nn.Linear(block_inplanes[3] * block.expansion, n_classes)
+        self.fc3 = nn.Linear(block_inplanes[3] * block.expansion, n_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv3d):
@@ -207,10 +209,14 @@ class ResNet(nn.Module):
         x = self.avgpool(x)
 
         x = x.view(x.size(0), -1)
-        x = self.fc(x)
+        x1 = self.fc1(x)
+        x2 = self.fc2(x)
+        x3 = self.fc3(x)
 
-        return x
-
+        return torch.cat((x1, x2, x3), dim=0)
+        # # 把结果归一化到0和1之间
+        # x1 = torch.sigmoid(x1)
+        # return x1
 
 def generate_model(model_depth, **kwargs):
     assert model_depth in [10, 18, 34, 50, 101, 152, 200]

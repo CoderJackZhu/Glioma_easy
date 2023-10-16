@@ -20,7 +20,7 @@ class ImageInfo:
 
     @property
     def label(self):
-        return int(self._data[0].split(' ')[1])
+        return self._data[0].split(' ')[1:]
 
 
 def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data',
@@ -79,6 +79,70 @@ def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data
     with open('test_patients.txt', 'w') as f:
         for i in range(len(test_imgs)):
             f.write(test_imgs[i] + ' ' + str(int(test_labels[i])) + '\n')
+
+
+def TCGA_train_test_split(glioma_dir='G:\Dataset\TCGA-TCIA-ArrangedData'):
+    image_dir = os.path.join(glioma_dir, 'TCIA', 'Images')
+    annotate_dir = os.path.join(glioma_dir, 'ArrangedGeneData', 'TCGA_subtypes_IDH.xlsx')
+    # 读取表格中的数据
+    annotate_file = pd.read_excel(annotate_dir, header=0)
+    patients = annotate_file['patient_id'].values
+    is_GBM = annotate_file['is_GBM'].values
+    IDH = annotate_file['is_IDH_mutant'].values
+    is_1p19q = annotate_file['is_1p19q_codeleted'].values
+
+    # 212 patients have the tumor grade, IDH mutation, and 1p/19q codeletion info.
+    #
+    # 1）is_GBM:
+    # - 1：glioblastoma(GBM);
+    # - 0：Low Grade Glioma(LGG);
+    #
+    # 2) is_IDH_mutant:
+    # - 1: IDH mutant;
+    # - 0: IDH wild-type;
+    #
+    # 3) is_1p19q_codeleted:
+    # - 1: 1p/19q co-deleted;
+    # - 0: 1p/19q intact;
+
+    # 删除标签为nan的数据，并删除对应的病人ID
+    patients = np.delete(patients, np.where(is_GBM == 'nan'))
+    IDH = np.delete(IDH, np.where(is_GBM == 'nan'))
+    is_1p19q = np.delete(is_1p19q, np.where(is_GBM == 'nan'))
+    is_GBM = np.delete(is_GBM, np.where(is_GBM == 'nan'))
+
+    # 删除标签为unknown的数据，并删除对应的病人ID
+    patients = np.delete(patients, np.where(is_GBM == 'unknown'))
+    IDH = np.delete(IDH, np.where(is_GBM == 'unknown'))
+    is_1p19q = np.delete(is_1p19q, np.where(is_GBM == 'unknown'))
+    is_GBM = np.delete(is_GBM, np.where(is_GBM == 'unknown'))
+
+    print('GBM: ', len(np.where(is_GBM == 1)[0]))
+    print('LGG: ', len(np.where(is_GBM == 0)[0]))
+
+    # 读取图片的路径
+    imgs_path = []
+    img_label = []
+    dirs = os.listdir(image_dir)
+    for dir in dirs:
+        if dir in patients:
+            imgs_path.append(os.path.join(image_dir, dir))
+            label_1 = IDH[np.where(patients == dir)[0][0]]
+            label_2 = is_1p19q[np.where(patients == dir)[0][0]]
+            label_3 = is_GBM[np.where(patients == dir)[0][0]]
+            img_label.append([label_1, label_2, label_3])
+
+    # 将数据分为训练集和测试集
+    train_imgs, test_imgs, train_labels, test_labels = train_test_split(imgs_path, img_label, test_size=0.2,
+                                                                        random_state=3407, stratify=img_label)
+
+    # 将训练集和测试集的数据分别写入txt文件
+    with open('tcia_train_patients.txt', 'w') as f:
+        for i in range(len(train_imgs)):
+            f.write(train_imgs[i] + ' ' + str(train_labels[i][0]) + ' ' + str(train_labels[i][1]) + ' ' + str(train_labels[i][2]) + '\n')
+    with open('tcia_test_patients.txt', 'w') as f:
+        for i in range(len(test_imgs)):
+            f.write(test_imgs[i] + ' ' + str(test_labels[i][0]) + ' ' + str(test_labels[i][1]) + ' ' + str(test_labels[i][2]) + '\n')
 
 
 class ClsDataset(Dataset):
@@ -230,6 +294,10 @@ class ClsDataset(Dataset):
         img_path = img_dir_info.path
         # 读取医学影像的标签
         img_label = img_dir_info.label
+        if len(img_label) == 1:
+            img_label = img_label[0]
+        else:
+            img_label = np.array(img_label, dtype=float)
         # 读取医学影像
         img_list = []
         path_dir = os.listdir(img_path)
@@ -269,30 +337,30 @@ class ClsDataset(Dataset):
 
 
 if __name__ == '__main__':
-    split_train_test(
-        glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images_expand')
-    # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
-    test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128)),
-                                                                        RandomAugmentation((16, 16, 16), (0.8, 1.2),
-                                                                                           (0.8, 1.2)),
-                                                                        ])
+    # split_train_test(
+    #     glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images_expand')
+    # # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
+    # test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128)),
+    #                                                                     RandomAugmentation((16, 16, 16), (0.8, 1.2),
+    #                                                                                        (0.8, 1.2)),
+    #                                                                     ])
+    # #
+    # # for k, v in train_dataset:
+    # #     print('Training:', k, v)
+    # save_dir = './test_out'
     #
-    # for k, v in train_dataset:
-    #     print('Training:', k, v)
-    save_dir = './test_out'
-
-    j = 0
-    for k, v in test_dataset:
-        print('Testing:', k.shape, v)
-        # 把k按照第一个通道的维度拆分成四个模态，并保存为nii文件
-        # 每个k建立一个文件夹
-        save_file_dir = os.path.join(save_dir, str(j))
-        os.makedirs(save_file_dir, exist_ok=True)
-        for i in range(k.shape[0]):
-            img = nib.Nifti1Image(k[i, :, :, :], np.eye(4))
-            nib.save(img, os.path.join(save_file_dir, str(i) + '.nii.gz'))
-
-        j += 1
+    # j = 0
+    # for k, v in test_dataset:
+    #     print('Testing:', k.shape, v)
+    #     # 把k按照第一个通道的维度拆分成四个模态，并保存为nii文件
+    #     # 每个k建立一个文件夹
+    #     save_file_dir = os.path.join(save_dir, str(j))
+    #     os.makedirs(save_file_dir, exist_ok=True)
+    #     for i in range(k.shape[0]):
+    #         img = nib.Nifti1Image(k[i, :, :, :], np.eye(4))
+    #         nib.save(img, os.path.join(save_file_dir, str(i) + '.nii.gz'))
+    #
+    #     j += 1
 
 
 
@@ -317,3 +385,9 @@ if __name__ == '__main__':
     # print(one_batch.shape)
     # img = nib.load('F:\\Code\\Medical\\Glioma_easy\\test_data_out\\Gliomas_00012_20190906_T1.nii.gz').get_fdata()
     # print(img.shape)
+
+    TCGA_train_test_split()
+    train_dataset = ClsDataset(list_file='tcia_train_patients.txt', transform=[Resize((128, 128, 128), orig_shape=(155, 240, 240))])
+
+    for k, v in train_dataset:
+        print('Training:', k.shape, v)
