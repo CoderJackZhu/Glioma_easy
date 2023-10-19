@@ -53,14 +53,14 @@ def train(device, args):
     tb_writer = SummaryWriter(log_dir=save_dir)
     val_dataset = ClsDataset(
         list_file=args.val_list,
-        transform=[Resize((128, 128, 128), orig_shape=(155, 240, 240)),
+        transform=[Resize((128, 128, 128)),
                    # RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
                    ]
     )
     axes = (0, 1, 2)
     train_dataset = ClsDataset(
         list_file=args.train_list,
-        transform=[Resize((128, 128, 128), orig_shape=(155, 240, 240)),
+        transform=[Resize((128, 128, 128)),
                    RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
 
                    # GaussianNoise()
@@ -84,16 +84,16 @@ def train(device, args):
     # model = ClsModel(args.model_name, args.num_classes, args.is_pretrained)
     # model = generate_model(model_depth=args.model_depth)
     # model = MultiModalCNN(num_modalities=2, input_channels=4, hidden_channels=64,  num_classes=4)
-    # model = uniformerv2_b16(
-    #     in_channels=4,
-    #     input_resolution=128,
-    #     pretrained=False,
-    #     t_size=128, backbone_drop_path_rate=0.2, drop_path_rate=0.4,
-    #     dw_reduction=1.5,
-    #     no_lmhra=True,
-    #     temporal_downsample=False,
-    #     num_classes=args.num_classes
-    # )
+    model = uniformerv2_b16(
+        in_channels=4,
+        input_resolution=128,
+        pretrained=False,
+        t_size=128, backbone_drop_path_rate=0.2, drop_path_rate=0.4,
+        dw_reduction=1.5,
+        no_lmhra=True,
+        temporal_downsample=False,
+        num_classes=args.num_classes
+    )
     # model = UNETR(
     #     in_channels=4,
     #     out_channels=2,
@@ -109,7 +109,7 @@ def train(device, args):
     #     res_block=True,
     #     dropout_rate=0.0,
     # )
-    model = generate_model(model_depth=args.model_depth, n_classes=args.num_classes)
+    # model = generate_model(model_depth=args.model_depth, n_classes=args.num_classes)
 
     print(model.state_dict().keys())
     model.to(device)
@@ -125,6 +125,7 @@ def train(device, args):
 
     model.zero_grad()
     eval_results = []
+    eval_accs = []
     for epoch in range(args.start_epoch, args.epochs):
         train_preds, train_labels = [], []
         losses = AverageMeter()
@@ -135,7 +136,7 @@ def train(device, args):
             img = img.to(device)
             # target = target.view(1, -1).expand(img.size(0), -1)
             # 更改target维度匹配输出
-            # target = target.view(-1)
+            target = target.view(-1)
             # print(target.shape)
             target = target.to(device)
             # # 对多标签进行one-hot编码
@@ -175,7 +176,7 @@ def train(device, args):
                     img = img.to(device)
                     # target = target.view(1, -1).expand(img.size(0), -1)
                     # 更改target维度匹配输出
-                    # target = target.view(-1)
+                    target = target.view(-1)
                     target = target.to(device)
 
                     output = model(img)
@@ -197,11 +198,17 @@ def train(device, args):
 
                 eval_result = (np.sum(labels == predicts)) / len(labels)
                 eval_results.append(eval_result)
+                # 计算验证集的accuracy
+                eval_acc = accuracy_score(labels, predicts)
+                eval_accs.append(eval_acc)
+
                 logger.info(f'precision = {eval_result:.4f}')
                 logger.info(f'eval_loss = {eval_loss:.4f}')
+                logger.info(f'eval_acc = {eval_acc:.4f}')
                 # tensorboard可视化
                 tb_writer.add_scalar('val/precision', eval_result, epoch + 1)
                 tb_writer.add_scalar('val/loss', eval_loss, epoch + 1)
+                tb_writer.add_scalar('val/accuracy', eval_acc, epoch + 1)
                 # 保存模型
                 save_path = os.path.join(args.output, f'precision_{eval_result:.4f}_num_{epoch + 1}')
                 os.makedirs(save_path, exist_ok=True)

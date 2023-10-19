@@ -20,7 +20,7 @@ class ImageInfo:
 
     @property
     def label(self):
-        return self._data[0].split(' ')[1:]
+        return self._data[0].split(' ')[1:2]
 
 
 def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data',
@@ -82,8 +82,10 @@ def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data
 
 
 def TCGA_train_test_split(glioma_dir='G:\Dataset\TCGA-TCIA-ArrangedData'):
-    image_dir = os.path.join(glioma_dir, 'TCIA', 'Images')
-    annotate_dir = os.path.join(glioma_dir, 'ArrangedGeneData', 'TCGA_subtypes_IDH.xlsx')
+    # image_dir = os.path.join(glioma_dir, 'TCIA', 'Images')
+    image_dir = glioma_dir
+    base_dir = "/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData"
+    annotate_dir = os.path.join(base_dir, 'ArrangedGeneData', 'TCGA_subtypes_IDH.xlsx')
     # 读取表格中的数据
     annotate_file = pd.read_excel(annotate_dir, header=0)
     patients = annotate_file['patient_id'].values
@@ -295,7 +297,7 @@ class ClsDataset(Dataset):
         # 读取医学影像的标签
         img_label = img_dir_info.label
         if len(img_label) == 1:
-            img_label = img_label[0]
+            img_label = int(img_label[0])
         else:
             img_label = np.array(img_label, dtype=float)
         # 读取医学影像
@@ -386,8 +388,8 @@ if __name__ == '__main__':
     # img = nib.load('F:\\Code\\Medical\\Glioma_easy\\test_data_out\\Gliomas_00012_20190906_T1.nii.gz').get_fdata()
     # print(img.shape)
 
-    TCGA_train_test_split()
-    train_dataset = ClsDataset(list_file='tcia_train_patients.txt', transform=[Resize((128, 128, 128), orig_shape=(155, 240, 240))])
+    TCGA_train_test_split('/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData_ROI_images_expand')
+    train_dataset = ClsDataset(list_file='tcia_train_patients.txt', transform=[Resize((128, 128, 128))])
 
     for k, v in train_dataset:
         print('Training:', k.shape, v)

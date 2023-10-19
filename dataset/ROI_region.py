@@ -325,7 +325,7 @@ def crop_roi(img_file, mask_file, save_file):
 
 
 
-def crop_roi_expand(img_file, mask_file, save_file, expansion=5):
+def crop_roi_expand(img_file, mask_file, save_file, expansion=0):
     img = sitk.ReadImage(img_file)
     mask = sitk.ReadImage(mask_file)
 
@@ -434,5 +434,5 @@ if __name__ == '__main__':
     # crop_roi_expand("F:/Code/Medical/Glioma_easy/test_data/Gliomas_00005_20181117/Gliomas_00005_20181117_T1.nii.gz",
     #          "F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz",
     #          "F:/Code/Medical/Glioma_easy/test_data_out/test2.nii.gz")
-    batch_get_roi("/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages", "/media/spgou/DATA/ZYJ/Dataset/captk_before_data_net_seg",
-                  "/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images_expand")
+    batch_get_roi("/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData/TCIA/Images", "/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData/TCIA/segmentation",
+                  "/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData_ROI_images_expand")
