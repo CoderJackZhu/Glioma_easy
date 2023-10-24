@@ -20,7 +20,7 @@ class ImageInfo:
 
     @property
     def label(self):
-        return self._data[0].split(' ')[1:2]
+        return self._data[0].split(' ')[3:4]
 
 
 def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data',
@@ -388,8 +388,9 @@ if __name__ == '__main__':
     # img = nib.load('F:\\Code\\Medical\\Glioma_easy\\test_data_out\\Gliomas_00012_20190906_T1.nii.gz').get_fdata()
     # print(img.shape)
 
-    TCGA_train_test_split('/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData_ROI_images_expand')
-    train_dataset = ClsDataset(list_file='tcia_train_patients.txt', transform=[Resize((128, 128, 128))])
+    TCGA_train_test_split('/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData/TCIA/Images')
+    train_dataset = ClsDataset(list_file='tcia_train_patients.txt', transform=[Resize((128, 128, 128),
+                                                                                      orig_shape=(155, 240, 240))])
 
     for k, v in train_dataset:
         print('Training:', k.shape, v)

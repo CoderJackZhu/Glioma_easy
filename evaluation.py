@@ -48,7 +48,7 @@ def evaluate(local_rank, device, args):
     with torch_distributed_zero_first(rank):
         val_dataset = ClsDataset(
             list_file=args.val_list,
-            transform=[Resize((128, 128, 128)
+            transform=[Resize((128, 128, 128), orig_shape=(155, 240, 240)
                               # , orig_shape=(155, 240, 240)
                               )]
         )
@@ -132,9 +132,11 @@ def evaluate(local_rank, device, args):
             # ROC曲线
             fpr, tpr, thresholds = metrics.roc_curve(labels, scores[:, 1], pos_label=1)
             auc = metrics.auc(fpr, tpr)
+            accuracy = metrics.accuracy_score(labels, predicts)
             precision = metrics.precision_score(labels, predicts)
             recall = metrics.recall_score(labels, predicts)
             f1 = metrics.f1_score(labels, predicts)
+            print('accuracy: %.4f' % accuracy)
             print('precision: %.4f' % precision)
             print('recall: %.4f' % recall)
             print('f1-score: %.4f' % f1)
@@ -180,7 +182,7 @@ def distributed_init(backend="gloo", port=None):
 if __name__ == '__main__':
     args = parser.parse_args()
     # 设置用第1块卡
-    os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     os.environ["RANK"] = '0'
     os.environ["WORLD_SIZE"] = '1'
     os.environ["LOCAL_RANK"] = '0'

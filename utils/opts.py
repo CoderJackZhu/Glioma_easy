@@ -16,7 +16,7 @@ parser.add_argument('--val_list', default='/media/spgou/DATA/ZYJ/Glioma_easy/dat
 parser.add_argument('--model_name', type=str, default="resnet50")
 parser.add_argument('--model_depth', type=int, default=34, help='the depth of the model')
 parser.add_argument('--is_pretrained',default=False, action="store_true", help='using imagenet pretrained model')
-parser.add_argument('--tune_from', type=str, default='/media/spgou/DATA/ZYJ/Glioma_easy/tcia_roi_idh_outputs/precision_0.9070_num_210/epoch_210.pth', help='fine-tune from checkpoint')
+parser.add_argument('--tune_from', type=str, default='/media/spgou/DATA/ZYJ/Glioma_easy/tcia_all_gbm_outputs/precision_0.6977_num_165/epoch_165.pth', help='fine-tune from checkpoint')
 parser.add_argument('--focal-loss', default=False, action="store_true")
 parser.add_argument('--label-smooth', default=False, action="store_true")
 parser.add_argument('--resume', type=str, default='', help='resume from checkpoint')
@@ -61,7 +61,7 @@ parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
 
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--output', type=str, default='./results/tcia_roi_idh_results', help='save dir for logs and outputs')
+parser.add_argument('--output', type=str, default='./results/tcia_all_gbm_results', help='save dir for logs and outputs')
 
 
 parser.add_argument('--backend', default='nccl', type=str, help='Pytorch DDP backend, gloo or nccl')
