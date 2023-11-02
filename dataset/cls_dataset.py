@@ -349,8 +349,8 @@ if __name__ == '__main__':
     # split_train_test(
     #     glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images_expand')
     # # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
-    split_train_test(glioma_dir="G:\\Dataset\\Xiangya_data\\captk_before_data_zscore_normalizedImages",
-                     annotate_file="F:\\Code\\Medical\\Glioma_easy\\dataset\\PathologicalData_anonymized_20231027.xlsx")
+    split_train_test(glioma_dir="/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images_expand",
+                     annotate_file="/media/spgou/DATA/ZYJ/Glioma_easy/dataset/PathologicalData_anonymized_20231027.xlsx")
     test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128)),
     #                                                                     RandomAugmentation((16, 16, 16), (0.8, 1.2),
     #                                                                                        (0.8, 1.2)),

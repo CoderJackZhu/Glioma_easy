@@ -1,28 +1,19 @@
+import gc
 import glob
 import os
 import sys
-from pathlib import Path
 
-import numpy as np
 import torch.backends.cudnn as cudnn
 import torch.optim
-import tqdm
+from sklearn.metrics import accuracy_score
 from torch.utils.tensorboard import SummaryWriter
-import gc
-from sklearn.metrics import confusion_matrix, accuracy_score
-
-from torchvision.transforms import ToTensor
-
-from dataset.transform import RandomAugmentation, RandomNoise, Scale, Resize
-# from dataset.transform import MedicalImageScaler
-from models.model import ClsModel, MultiModalCNN
-from models import UNETR, uniformerv2_b16
-from models.resnet import generate_model
 
 ## nnU-Net的图像增强方法
 # from dataset.transform import GaussianNoise, GaussianBlur, BrightnessMultiplicative, \
 #     ContrastAugmentation, SimulateLowResolution, Gamma, Mirror
 from dataset.transform import *
+# from dataset.transform import MedicalImageScaler
+from models import uniformerv2_b16
 
 FILE = Path(__file__).resolve()
 
@@ -34,7 +25,6 @@ from utils import init_logger, AverageMeter
 from utils import get_scheduler, parser
 
 from dataset import ClsDataset
-from models.resnet import generate_model
 
 
 def train(device, args):
@@ -53,14 +43,19 @@ def train(device, args):
     tb_writer = SummaryWriter(log_dir=save_dir)
     val_dataset = ClsDataset(
         list_file=args.val_list,
-        transform=[Resize((128, 128, 128), orig_shape=(155, 240, 240)),
+        transform=[Resize((128, 128, 128),
+                          # orig_shape=(155, 240, 240)
+                          ),
                    # RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
-                   ]
+                   ],
+
     )
     axes = (0, 1, 2)
     train_dataset = ClsDataset(
         list_file=args.train_list,
-        transform=[Resize((128, 128, 128), orig_shape=(155, 240, 240)),
+        transform=[Resize((128, 128, 128),
+                          # orig_shape=(155, 240, 240)
+                          ),
                    RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
                    # GaussianNoise()
                    ]

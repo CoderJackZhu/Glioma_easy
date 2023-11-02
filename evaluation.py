@@ -48,7 +48,8 @@ def evaluate(local_rank, device, args):
     with torch_distributed_zero_first(rank):
         val_dataset = ClsDataset(
             list_file=args.val_list,
-            transform=[Resize((128, 128, 128), orig_shape=(155, 240, 240)
+            transform=[Resize((128, 128, 128),
+                              # orig_shape=(155, 240, 240)
                               # , orig_shape=(155, 240, 240)
                               )]
         )
