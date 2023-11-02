@@ -21,7 +21,7 @@ class ImageInfo:
 
     @property
     def label(self):
-        return self._data[0].split(' ')[1]
+        return self._data[0].split(' ')[2:3]
 
 
 def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data',
@@ -224,6 +224,7 @@ class ClsDataset(Dataset):
     def __len__(self):
         return len(self.imgs_list)
 
+
 # def save_as_h5py(img_path, h5py_path):
 #     """
 #     把每个文件夹中的影像读取出来，并将其转换成h5py文件，每个文件夹对应一个h5py文件
@@ -352,9 +353,13 @@ if __name__ == '__main__':
     split_train_test(glioma_dir="/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images_expand",
                      annotate_file="/media/spgou/DATA/ZYJ/Glioma_easy/dataset/PathologicalData_anonymized_20231027.xlsx")
     test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128)),
-    #                                                                     RandomAugmentation((16, 16, 16), (0.8, 1.2),
-    #                                                                                        (0.8, 1.2)),
+                                                                        #                                                                     RandomAugmentation((16, 16, 16), (0.8, 1.2),
+                                                                        #                                                                                        (0.8, 1.2)),
                                                                         ])
+    train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128)),
+                                                                          #                                                                      RandomAugmentation((16, 16, 16), (0.8, 1.2),
+                                                                          #                                                                                         (0.8, 1.2)),
+                                                                          ])
     # #
     # # for k, v in train_dataset:
     # #     print('Training:', k, v)
@@ -404,4 +409,3 @@ if __name__ == '__main__':
     #              'G:\\Dataset\\Xiangya_data\\captk_before_data_zscore_normalizedImages_h5py')
     # save_as_npy('G:\\Dataset\\Xiangya_data\\captk_before_data_zscore_normalizedImages',
     #             'G:\\Dataset\\Xiangya_data\\captk_before_data_zscore_normalizedImages_npy')
-
