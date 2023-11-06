@@ -7,7 +7,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 from sklearn.metrics import accuracy_score
 from torch.utils.tensorboard import SummaryWriter
-
+from monai.transforms import EnsureChannelFirst, Compose, RandRotate90, Resize, ScaleIntensity
 ## nnU-Net的图像增强方法
 # from dataset.transform import GaussianNoise, GaussianBlur, BrightnessMultiplicative, \
 #     ContrastAugmentation, SimulateLowResolution, Gamma, Mirror
@@ -50,7 +50,9 @@ def train(device, args):
                    ],
 
     )
-    axes = (0, 1, 2)
+
+    # train_transforms = Compose([ScaleIntensity(), EnsureChannelFirst(), Resize((96, 96, 96)), RandRotate90()])
+    # val_transforms = Compose([ScaleIntensity(), EnsureChannelFirst(), Resize((96, 96, 96))])
     train_dataset = ClsDataset(
         list_file=args.train_list,
         transform=[Resize((128, 128, 128),

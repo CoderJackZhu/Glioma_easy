@@ -21,10 +21,68 @@ class ImageInfo:
 
     @property
     def label(self):
-        return self._data[0].split(' ')[2:3]
+        return self._data[0].split(' ')[1]
 
 
 def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data',
+                     annotate_file='PathologicalData_DropNull_manualCorrected_analyzed_anonymized.xlsx'):
+    """
+    处理数据并得到划分好的训练集列表和测试集txt文件，文件的每行是路径加标签
+    :return:
+    """
+    # 读取表格中的数据
+    annotate_file = pd.read_excel(annotate_file, header=0)
+    patients = annotate_file['PatientID_anonymized'].values
+    # labels = annotate_file['WHO_grade'].values
+    labels = annotate_file['WHO_grade'].values
+    labels = np.array(labels, dtype=str)
+    # 删除标签为nan的数据，并删除对应的病人ID
+    patients = np.delete(patients, np.where(labels == 'nan'))
+    labels = np.delete(labels, np.where(labels == 'nan'))
+    labels = np.array(labels, dtype=float)
+
+    # # 把标签更改为0，1，2，3
+    # labels[np.where(labels == 1)] = 0
+    # labels[np.where(labels == 2)] = 1
+    # labels[np.where(labels == 3)] = 2
+    # labels[np.where(labels == 4)] = 3
+
+    # 把前三类标签合并为一类，最后一类，为二分类问题
+    labels[np.where(labels == 1)] = 0
+    labels[np.where(labels == 2)] = 0
+    labels[np.where(labels == 3)] = 0
+    labels[np.where(labels == 4)] = 1
+
+    # 读取图片的路径
+    imgs_path = []
+    img_label = []
+    dirs = os.listdir(glioma_dir)
+    for dir in dirs:
+        patient_id = '_'.join(dir.split('_')[:2])
+        if patient_id in patients:
+            imgs_path.append(os.path.join(glioma_dir, dir))
+            img_label.append(labels[np.where(patients == patient_id)[0][0]])
+
+    # 输出低级别和高级别的数量
+    print('Low grade: ', len(np.where(np.array(img_label) == 0)[0]))
+    print('High grade: ', len(np.where(np.array(img_label) == 1)[0]))
+
+    # 将数据分为训练集和测试集
+    train_imgs, test_imgs, train_labels, test_labels = train_test_split(imgs_path, img_label, test_size=0.2,
+                                                                        random_state=3407, stratify=img_label)
+    print('Train Data: ', len(train_imgs))
+    print('Test Data: ', len(test_imgs))
+
+    # 将训练集和测试集的数据分别写入txt文件
+    with open('train_patients.txt', 'w') as f:
+        for i in range(len(train_imgs)):
+            f.write(train_imgs[i] + ' ' + str(int(train_labels[i])) + '\n')
+    with open('test_patients.txt', 'w') as f:
+        for i in range(len(test_imgs)):
+            f.write(test_imgs[i] + ' ' + str(int(test_labels[i])) + '\n')
+
+
+def split_train_test_1p19q(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data',
                      annotate_file='PathologicalData_DropNull_manualCorrected_analyzed_anonymized.xlsx'):
     """
     处理数据并得到划分好的训练集列表和测试集txt文件，文件的每行是路径加标签
@@ -350,33 +408,43 @@ if __name__ == '__main__':
     # split_train_test(
     #     glioma_dir='/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images_expand')
     # # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128))])
-    split_train_test(glioma_dir="/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images_expand",
-                     annotate_file="/media/spgou/DATA/ZYJ/Glioma_easy/dataset/PathologicalData_anonymized_20231027.xlsx")
+    # split_train_test(glioma_dir="/media/spgou/DATA/ZYJ/Dataset/zscore_normalizedImages_ROI_images_expand",
+    #                  annotate_file="/media/spgou/DATA/ZYJ/Glioma_easy/dataset/PathologicalData_anonymized_20231027.xlsx")
+    split_train_test(glioma_dir="G:\\Dataset\\Xiangya_data\\captk_before_data_zscore_normalizedImages")
     test_dataset = ClsDataset(list_file='test_patients.txt', transform=[Resize((128, 128, 128)),
-                                                                        #                                                                     RandomAugmentation((16, 16, 16), (0.8, 1.2),
-                                                                        #                                                                                        (0.8, 1.2)),
+                                                                        # RandomAugmentation((16, 16, 16), (0.8, 1.2),(0.8, 1.2)),
                                                                         ])
     train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128)),
-                                                                          #                                                                      RandomAugmentation((16, 16, 16), (0.8, 1.2),
-                                                                          #                                                                                         (0.8, 1.2)),
+                                                                          RandomAugmentation((16, 16, 16), (0.8, 1.2),(0.8, 1.2)),
                                                                           ])
     # #
     # # for k, v in train_dataset:
     # #     print('Training:', k, v)
-    # save_dir = './test_out'
-    #
-    # j = 0
-    # for k, v in test_dataset:
-    #     print('Testing:', k.shape, v)
-    #     # 把k按照第一个通道的维度拆分成四个模态，并保存为nii文件
-    #     # 每个k建立一个文件夹
-    #     save_file_dir = os.path.join(save_dir, str(j))
-    #     os.makedirs(save_file_dir, exist_ok=True)
-    #     for i in range(k.shape[0]):
-    #         img = nib.Nifti1Image(k[i, :, :, :], np.eye(4))
-    #         nib.save(img, os.path.join(save_file_dir, str(i) + '.nii.gz'))
-    #
-    #     j += 1
+    save_test_dir = './test_out'
+    save_train_dir = './train_out'
+    j = 0
+    for k, v in test_dataset:
+        print('Testing:', k.shape, v)
+        # 把k按照第一个通道的维度拆分成四个模态，并保存为nii文件
+        # 每个k建立一个文件夹
+        save_file_dir = os.path.join(save_test_dir, str(j))
+        os.makedirs(save_file_dir, exist_ok=True)
+        for i in range(k.shape[0]):
+            img = nib.Nifti1Image(k[i, :, :, :], np.eye(4))
+            nib.save(img, os.path.join(save_file_dir, str(i) + '.nii.gz'))
+        j += 1
+
+    j = 0
+    for k, v in train_dataset:
+        print('Training:', k.shape, v)
+        # 把k按照第一个通道的维度拆分成四个模态，并保存为nii文件
+        # 每个k建立一个文件夹
+        save_file_dir = os.path.join(save_train_dir, str(j))
+        os.makedirs(save_file_dir, exist_ok=True)
+        for i in range(k.shape[0]):
+            img = nib.Nifti1Image(k[i, :, :, :], np.eye(4))
+            nib.save(img, os.path.join(save_file_dir, str(i) + '.nii.gz'))
+        j += 1
 
     # # train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=0)
     # test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0)
