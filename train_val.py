@@ -7,6 +7,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 from sklearn.metrics import accuracy_score
 from torch.utils.tensorboard import SummaryWriter
+from torch.cuda.amp import autocast, GradScaler
 from monai.transforms import EnsureChannelFirst, Compose, RandRotate90, Resize, ScaleIntensity
 ## nnU-Net的图像增强方法
 # from dataset.transform import GaussianNoise, GaussianBlur, BrightnessMultiplicative, \
@@ -122,40 +123,39 @@ def train(device, args):
     model.zero_grad()
     eval_results = []
     eval_accs = []
+    scaler = GradScaler()
+
     for epoch in range(args.start_epoch, args.epochs):
-        train_preds, train_labels = [], []
+        train_preds, train_labels = []
         losses = AverageMeter()
         model.train()
+
         for step, (img, target) in enumerate(train_loader):
-            # 把图片由双精度变为浮点数
-            img = img.type(torch.cuda.FloatTensor)
-            img = img.to(device)
-            # target = target.view(1, -1).expand(img.size(0), -1)
-            # 更改target维度匹配输出
-            target = target.view(-1)
-            # print(target.shape)
-            target = target.to(device)
-            # # 对多标签进行one-hot编码
-            # target = torch.zeros(target.size(0), 2).scatter_(1, target.view(-1, 1), 1)
-            # print(img.shape, target.shape)
-            output = model(img)
+            optimizer.zero_grad()
 
-            predict = torch.max(output, dim=1)[1]
-            train_preds.append(predict)
+            with autocast():
+                # 把图片由双精度变为浮点数
+                img = img.to(device, dtype=torch.float16)
+                target = target.view(-1).to(device, dtype=torch.int64)
+
+                output = model(img)
+                loss = criterion(output, target)
+
+            # 梯度缩放
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+
+            train_preds.append(output.argmax(1))
             train_labels.append(target)
-
-            loss = criterion(output, target.long())
-            loss.backward()
             losses.update(loss.item(), img.size(0))
 
             if step % args.print_freq == 0:
                 logger.info(
                     f"Epoch: [{epoch}/{args.epochs}][{step}/{len(train_loader)}], lr: {optimizer.param_groups[-1]['lr']:.8f} \t loss = {losses.val:.4f}({losses.avg:.4f})")
 
-            optimizer.step()
-            optimizer.zero_grad()
         scheduler.step()
-        # 得到一个epoch的平均loss，并可视化
+
         logger.info(f'Epoch: [{epoch}/{args.epochs}] \t loss = {losses.avg:.4f}')
         tb_writer.add_scalar('train/loss', losses.avg, epoch + 1)
 
@@ -167,17 +167,16 @@ def train(device, args):
                 eval_pbar = tqdm.tqdm(val_loader, desc=f'epoch {epoch + 1} / {args.epochs} evaluating', position=1,
                                       disable=False)
                 for step, (img, target) in enumerate(eval_pbar):
-                    # 变为浮点数
-                    img = img.type(torch.cuda.FloatTensor)
-                    img = img.to(device)
-                    # target = target.view(1, -1).expand(img.size(0), -1)
-                    # 更改target维度匹配输出
-                    target = target.view(-1)
-                    target = target.to(device)
+                    optimizer.zero_grad()  # 添加这一行以确保梯度不会累积
 
-                    output = model(img)
-                    loss = criterion(output, target.long())
-                    predict = torch.max(output, dim=1)[1]
+                    with autocast():
+                        # 把图片由双精度变为浮点数
+                        img = img.to(device, dtype=torch.float16)
+                        target = target.view(-1).to(device, dtype=torch.int64)
+
+                        output = model(img)
+                        loss = criterion(output, target)
+                        predict = torch.max(output, dim=1)[1]
 
                     labels.append(target)
                     preds.append(predict)
@@ -188,12 +187,13 @@ def train(device, args):
 
                 labels = labels.cpu().numpy()
                 predicts = predicts.cpu().numpy()
+
                 # 计算验证集的损失
                 eval_loss = np.mean(losses)
-                print(labels, predicts, eval_loss)
 
                 eval_result = (np.sum(labels == predicts)) / len(labels)
                 eval_results.append(eval_result)
+
                 # 计算验证集的accuracy
                 eval_acc = accuracy_score(labels, predicts)
                 eval_accs.append(eval_acc)
@@ -201,24 +201,26 @@ def train(device, args):
                 logger.info(f'precision = {eval_result:.4f}')
                 logger.info(f'eval_loss = {eval_loss:.4f}')
                 logger.info(f'eval_acc = {eval_acc:.4f}')
+
                 # tensorboard可视化
                 tb_writer.add_scalar('val/precision', eval_result, epoch + 1)
                 tb_writer.add_scalar('val/loss', eval_loss, epoch + 1)
                 tb_writer.add_scalar('val/accuracy', eval_acc, epoch + 1)
+
                 # 保存模型
                 save_path = os.path.join(args.output, f'precision_{eval_result:.4f}_num_{epoch + 1}')
                 os.makedirs(save_path, exist_ok=True)
                 model_to_save = (model.module if hasattr(model, "module") else model)
                 torch.save(model_to_save.state_dict(), os.path.join(save_path, f'epoch_{epoch + 1}.pth'))
 
-        train_preds = torch.cat(train_preds, dim=0).cpu().numpy()
-        train_labels = torch.cat(train_labels, dim=0).cpu().numpy()
-        train_accuracy = accuracy_score(train_labels, train_preds)
-        logger.info(f'train_accuracy = {train_accuracy:.4f}')
-        tb_writer.add_scalar('train/accuracy', train_accuracy, epoch + 1)
-        # 清理GPU缓存
-        torch.cuda.empty_cache()
-        gc.collect()
+            train_preds = torch.cat(train_preds, dim=0).cpu().numpy()
+            train_labels = torch.cat(train_labels, dim=0).cpu().numpy()
+            train_accuracy = accuracy_score(train_labels, train_preds)
+            logger.info(f'train_accuracy = {train_accuracy:.4f}')
+            tb_writer.add_scalar('train/accuracy', train_accuracy, epoch + 1)
+            # 清理GPU缓存
+            torch.cuda.empty_cache()
+            gc.collect()
 
 
 def check_rootfolders():
