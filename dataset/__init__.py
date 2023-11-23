@@ -1,1 +1,1 @@
-from .cls_dataset import ClsDataset
+from .cls_dataset import ClsDataset, ClsDatasetH5py

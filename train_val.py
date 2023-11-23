@@ -9,7 +9,7 @@ from sklearn.metrics import accuracy_score
 from torch.utils.tensorboard import SummaryWriter
 from torch.cuda.amp import autocast, GradScaler
 from monai.transforms import EnsureChannelFirst, Compose, RandRotate90, Resize, ScaleIntensity
-## nnU-Net的图像增强方法
+# nnU-Net的图像增强方法
 # from dataset.transform import GaussianNoise, GaussianBlur, BrightnessMultiplicative, \
 #     ContrastAugmentation, SimulateLowResolution, Gamma, Mirror
 from dataset.transform import *
@@ -25,7 +25,7 @@ if str(ROOT) not in sys.path:
 from utils import init_logger, AverageMeter
 from utils import get_scheduler, parser
 
-from dataset import ClsDataset
+from dataset import ClsDataset, ClsDatasetH5py
 
 
 def train(device, args):
@@ -42,27 +42,25 @@ def train(device, args):
     logger = init_logger(log_file=args.output + f'/log.txt')
     # 使用tensorboard可视化，每个新的
     tb_writer = SummaryWriter(log_dir=save_dir)
-    val_dataset = ClsDataset(
-        list_file=args.val_list,
-        transform=[Resize((128, 128, 128),
-                          # orig_shape=(155, 240, 240)
-                          ),
-                   # RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
-                   ],
+    val_dataset = ClsDatasetH5py(list_file=args.val_list,
+                                 h5py_path='/media/spgou/DATA/ZYJ/Dataset/UCSF_TCIA_ROI_images_h5py',
+                                 transform=[Resize((128, 128, 128),
+                                                   # orig_shape=(155, 240, 240)
+                                                   ),
+                                            # RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
+                                            ],
 
-    )
+                                 )
 
     # train_transforms = Compose([ScaleIntensity(), EnsureChannelFirst(), Resize((96, 96, 96)), RandRotate90()])
     # val_transforms = Compose([ScaleIntensity(), EnsureChannelFirst(), Resize((96, 96, 96))])
-    train_dataset = ClsDataset(
-        list_file=args.train_list,
-        transform=[Resize((128, 128, 128),
-                          # orig_shape=(155, 240, 240)
-                          ),
-                   RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
-                   # GaussianNoise()
-                   ]
-    )
+    train_dataset = ClsDatasetH5py(list_file=args.train_list,
+                                   h5py_path='/media/spgou/DATA/ZYJ/Dataset/UCSF_TCIA_ROI_images_h5py',
+                                   transform=[
+                                       RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
+                                       # GaussianNoise()
+                                   ]
+                                   )
     # [RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2), (0.8, 1.2)),
     #                    ToTensor()]
     logger.info(f"Num train examples = {len(train_dataset)}")
@@ -123,29 +121,36 @@ def train(device, args):
     model.zero_grad()
     eval_results = []
     eval_accs = []
-    scaler = GradScaler()
+    # scaler = GradScaler()
 
     for epoch in range(args.start_epoch, args.epochs):
-        train_preds, train_labels = []
+        train_preds, train_labels = [], []
         losses = AverageMeter()
         model.train()
 
         for step, (img, target) in enumerate(train_loader):
             optimizer.zero_grad()
 
-            with autocast():
-                # 把图片由双精度变为浮点数
-                img = img.to(device, dtype=torch.float16)
-                target = target.view(-1).to(device, dtype=torch.int64)
+            # with torch.autocast(device_type="cuda"):
+            # # 把图片由双精度变为浮点数
+            img = img.type(torch.cuda.FloatTensor)
+            img = img.to(device)
+            target = target.view(-1).to(device)
 
-                output = model(img)
-                loss = criterion(output, target)
-
+            output = model(img)
             # 梯度缩放
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
 
+            # scaler.scale(loss).backward()
+            # scaler.unscale_(optimizer)
+            # torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            # scaler.step(optimizer)
+            # scaler.update()
+            predict = torch.max(output, dim=1)[1]
+            train_preds.append(predict)
+            train_labels.append(target)
+
+            loss = criterion(output, target.long())
+            loss.backward()
             train_preds.append(output.argmax(1))
             train_labels.append(target)
             losses.update(loss.item(), img.size(0))
@@ -154,8 +159,9 @@ def train(device, args):
                 logger.info(
                     f"Epoch: [{epoch}/{args.epochs}][{step}/{len(train_loader)}], lr: {optimizer.param_groups[-1]['lr']:.8f} \t loss = {losses.val:.4f}({losses.avg:.4f})")
 
+            optimizer.step()
         scheduler.step()
-
+        # 得到一个epoch的平均loss，并可视化
         logger.info(f'Epoch: [{epoch}/{args.epochs}] \t loss = {losses.avg:.4f}')
         tb_writer.add_scalar('train/loss', losses.avg, epoch + 1)
 
@@ -169,14 +175,15 @@ def train(device, args):
                 for step, (img, target) in enumerate(eval_pbar):
                     optimizer.zero_grad()  # 添加这一行以确保梯度不会累积
 
-                    with autocast():
-                        # 把图片由双精度变为浮点数
-                        img = img.to(device, dtype=torch.float16)
-                        target = target.view(-1).to(device, dtype=torch.int64)
+                    # with torch.autocast(device_type="cuda"):
+                    # 把图片由双精度变为浮点数
+                    img = img.type(torch.cuda.FloatTensor)
+                    img = img.to(device)
+                    target = target.view(-1).to(device)
 
-                        output = model(img)
-                        loss = criterion(output, target)
-                        predict = torch.max(output, dim=1)[1]
+                    output = model(img)
+                    loss = criterion(output, target.long())
+                    predict = torch.max(output, dim=1)[1]
 
                     labels.append(target)
                     preds.append(predict)
@@ -190,6 +197,7 @@ def train(device, args):
 
                 # 计算验证集的损失
                 eval_loss = np.mean(losses)
+                print(labels, predicts, eval_loss)
 
                 eval_result = (np.sum(labels == predicts)) / len(labels)
                 eval_results.append(eval_result)
@@ -213,14 +221,14 @@ def train(device, args):
                 model_to_save = (model.module if hasattr(model, "module") else model)
                 torch.save(model_to_save.state_dict(), os.path.join(save_path, f'epoch_{epoch + 1}.pth'))
 
-            train_preds = torch.cat(train_preds, dim=0).cpu().numpy()
-            train_labels = torch.cat(train_labels, dim=0).cpu().numpy()
-            train_accuracy = accuracy_score(train_labels, train_preds)
-            logger.info(f'train_accuracy = {train_accuracy:.4f}')
-            tb_writer.add_scalar('train/accuracy', train_accuracy, epoch + 1)
-            # 清理GPU缓存
-            torch.cuda.empty_cache()
-            gc.collect()
+        train_preds = torch.cat(train_preds, dim=0).cpu().numpy()
+        train_labels = torch.cat(train_labels, dim=0).cpu().numpy()
+        train_accuracy = accuracy_score(train_labels, train_preds)
+        logger.info(f'train_accuracy = {train_accuracy:.4f}')
+        tb_writer.add_scalar('train/accuracy', train_accuracy, epoch + 1)
+        # 清理GPU缓存
+        torch.cuda.empty_cache()
+        gc.collect()
 
 
 def check_rootfolders():
@@ -232,7 +240,7 @@ def check_rootfolders():
 
 if __name__ == '__main__':
     args = parser.parse_args()
-
+    # os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(args.train_list)
 

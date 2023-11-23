@@ -4,9 +4,9 @@
 # @Time         :2023/9/7 19:20
 # @Author       :Jack Zhu
 
-import SimpleITK as sitk
 import os
-import matplotlib.pyplot as plt
+
+import SimpleITK as sitk
 import numpy as np
 from tqdm import tqdm
 
@@ -323,12 +323,9 @@ def crop_roi(img_file, mask_file, save_file):
     sitk.WriteImage(nor_resize_img, save_file)
 
 
-
-
 def crop_roi_expand(img_file, mask_file, save_file, expansion=0):
     img = sitk.ReadImage(img_file)
     mask = sitk.ReadImage(mask_file)
-
     spacing = img.GetSpacing()
     new_direction = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
     # 根据预测的标签剪裁
@@ -341,34 +338,37 @@ def crop_roi_expand(img_file, mask_file, save_file, expansion=0):
     start = max(0, start - expansion)
     end = min(z - 1, end + expansion)
 
-    saveimg = pre_imgarray[start:end + 1, :, :]
+    save_img = pre_imgarray[start:end + 1, :, :]
     start, end = crop_b(pre_maskarray, x)
 
     # Expand the crop region by 'expansion' pixels
     start = max(0, start - expansion)
     end = min(x - 1, end + expansion)
 
-    saveimg = saveimg[:, start:end + 1, :]
+    save_img = save_img[:, start:end + 1, :]
     start, end = crop_c(pre_maskarray, y)
 
     # Expand the crop region by 'expansion' pixels
     start = max(0, start - expansion)
     end = min(y - 1, end + expansion)
 
-    saveimg = saveimg[:, :, start:end + 1]
+    save_img = save_img[:, :, start:end + 1]
 
     # resize
-    saveimg = sitk.GetImageFromArray(saveimg)
-    # print(saveimg.GetSize())
-    saveimg.SetDirection(new_direction)
-    saveimg.SetOrigin(img.GetOrigin())
-    saveimg.SetSpacing(spacing)
-    resize_img = resize_image_itk(saveimg, (128, 128, 128), resamplemethod=sitk.sitkLinear)
+    save_img = sitk.GetImageFromArray(save_img)
+    # print(save_img.GetSize())
+    # 将尺寸保存下来
+    # with open("/media/spgou/DATA/ZYJ/Glioma_easy/dataset/tcga_size.txt", "a") as f:
+    #     f.write(str(save_img.GetSize()))
+    save_img.SetDirection(new_direction)
+    save_img.SetOrigin(img.GetOrigin())
+    save_img.SetSpacing(spacing)
+    resize_img = resize_image_itk(save_img, (128, 128, 128), resamplemethod=sitk.sitkLinear)
 
     # 标准化
-    resize_imgarr = sitk.GetArrayFromImage(resize_img)
-    nor_resize_imgarr = normalize_data(resize_imgarr)
-    nor_resize_img = sitk.GetImageFromArray(nor_resize_imgarr)
+    resize_img_arr = sitk.GetArrayFromImage(resize_img)
+    nor_resize_img_arr = normalize_data(resize_img_arr)
+    nor_resize_img = sitk.GetImageFromArray(nor_resize_img_arr)
     nor_resize_img.SetSpacing(resize_img.GetSpacing())
     nor_resize_img.SetOrigin(resize_img.GetOrigin())
     nor_resize_img.SetDirection(resize_img.GetDirection())
@@ -395,7 +395,7 @@ def batch_get_roi(img_dir, mask_dir, save_path):
     patient_dirs = os.listdir(img_dir)
     for patient_dir in tqdm(patient_dirs):
         patient = os.path.join(img_dir, patient_dir)
-        patient_mask = os.path.join(mask_dir, patient_dir + ".nii.gz")
+        patient_mask = os.path.join(mask_dir, patient_dir.split('_')[0] + "_tumor_segmentation.nii.gz")
         patient_save = os.path.join(save_path, patient_dir)
         if not os.path.exists(patient_save):
             os.mkdir(patient_save)
@@ -434,5 +434,12 @@ if __name__ == '__main__':
     # crop_roi_expand("F:/Code/Medical/Glioma_easy/test_data/Gliomas_00005_20181117/Gliomas_00005_20181117_T1.nii.gz",
     #          "F:/Code/Medical/Glioma_easy/test_data_seg/Gliomas_00005_20181117.nii.gz",
     #          "F:/Code/Medical/Glioma_easy/test_data_out/test2.nii.gz")
-    batch_get_roi("/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData/TCIA/Images", "/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData/TCIA/segmentation",
-                  "/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData_ROI_images_expand")
+    # batch_get_roi("/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData/TCIA/Images", "/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData/TCIA/segmentation",
+    #               "/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData_ROI_images_expand_test")
+    # batch_get_roi("/media/spgou/DATA/ZYJ/Dataset/captk_before_data_zscore_normalizedImages_have_seg",
+    #               "/media/spgou/DATA/ZYJ/Dataset/captk_before_data_net_seg_rm_blank",
+    #               "/media/spgou/DATA/ZYJ/Dataset/captk_before_data_zscore_normalizedImages_have_seg_ROI_images_expand_rm_blank")
+    batch_get_roi('/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCSF-PDGM-v3-20230111_img',
+                  '/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCSF-PDGM-v3-20230111_seg',
+                    '/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCSF-PDGM-v3-20230111_ROI_images')
+

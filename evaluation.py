@@ -1,23 +1,14 @@
-import os
-import tqdm
-import time
-import shutil
-
-import numpy as np
-import torch.nn.parallel
-import torch.backends.cudnn as cudnn
-import torch.optim
-from torch.nn import functional as F
-import torch.distributed as dist
-
 import sys
 from pathlib import Path
 
-from dataset.cls_dataset import ClsDataset
-from dataset.transform import RandomAugmentation, RandomNoise, Scale, Resize
-from utils.util import plot_roc
+import torch.distributed as dist
+import torch.nn.parallel
+import torch.optim
+
+from dataset.cls_dataset import ClsDataset, ClsDatasetH5py
+from dataset.transform import Resize
 from utils.util import plot_confusion_matrix
-from models.resnet import generate_model
+from utils.util import plot_roc
 
 FILE = Path(__file__).resolve()
 
@@ -25,20 +16,17 @@ ROOT = FILE.parents[1]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 
-from utils import init_logger, torch_distributed_zero_first, AverageMeter, distributed_concat
-from utils import get_scheduler, parser
+from utils import init_logger, torch_distributed_zero_first, distributed_concat
+from utils import parser
 
-import glob
 import os
-import sys
-from pathlib import Path
 
 import numpy as np
 import torch.backends.cudnn as cudnn
 import torch.optim
 import tqdm
 from torch.utils.tensorboard import SummaryWriter
-from models import UNETR, uniformerv2_b16
+from models import uniformerv2_b16
 
 
 def evaluate(local_rank, device, args):
@@ -46,8 +34,9 @@ def evaluate(local_rank, device, args):
     logger = init_logger(log_file=args.output + f'/log')
 
     with torch_distributed_zero_first(rank):
-        val_dataset = ClsDataset(
+        val_dataset = ClsDatasetH5py(
             list_file=args.val_list,
+            h5py_path='/media/spgou/DATA/ZYJ/Dataset/UCSF_TCIA_ROI_images_h5py',
             transform=[Resize((128, 128, 128),
                               # orig_shape=(155, 240, 240)
                               # , orig_shape=(155, 240, 240)
@@ -134,9 +123,9 @@ def evaluate(local_rank, device, args):
             fpr, tpr, thresholds = metrics.roc_curve(labels, scores[:, 1], pos_label=1)
             auc = metrics.auc(fpr, tpr)
             accuracy = metrics.accuracy_score(labels, predicts)
-            precision = metrics.precision_score(labels, predicts)
-            recall = metrics.recall_score(labels, predicts)
-            f1 = metrics.f1_score(labels, predicts)
+            precision = metrics.precision_score(labels, predicts, average='macro')
+            recall = metrics.recall_score(labels, predicts, average='macro')
+            f1 = metrics.f1_score(labels, predicts, average='macro')
             print('accuracy: %.4f' % accuracy)
             print('precision: %.4f' % precision)
             print('recall: %.4f' % recall)
