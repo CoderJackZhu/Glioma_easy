@@ -42,21 +42,37 @@ def train(device, args):
     logger = init_logger(log_file=args.output + f'/log.txt')
     # 使用tensorboard可视化，每个新的
     tb_writer = SummaryWriter(log_dir=save_dir)
+    # val_dataset = ClsDataset(list_file=args.val_list,
+    #                          transform=[Resize((128, 128, 128),
+    #                                            # orig_shape=(155, 240, 240)
+    #                                            # , orig_shape=(155, 240, 240)
+    #                                            )]
+    #                          )
+    # train_dataset = ClsDataset(list_file=args.train_list,
+    #                              transform=[
+    #                                   # Resize((128, 128, 128), orig_shape=(128, 128, 128)),
+    #                                   RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
+    #                                   # GaussianNoise()
+    #                              ]
+    #                              )
+
     val_dataset = ClsDatasetH5py(list_file=args.val_list,
-                                 h5py_path='/media/spgou/DATA/ZYJ/Dataset/UCSF_TCIA_ROI_images_h5py',
-                                 transform=[Resize((128, 128, 128),
+                                 h5py_path='/media/spgou/FAST/UCSF_TCIA_ROI_images_h5py',
+                                 transform=None
+                                 # [Resize((128, 128, 128),
                                                    # orig_shape=(155, 240, 240)
-                                                   ),
+                                                   # ),
                                             # RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
-                                            ],
+                                            # ],
 
                                  )
 
     # train_transforms = Compose([ScaleIntensity(), EnsureChannelFirst(), Resize((96, 96, 96)), RandRotate90()])
     # val_transforms = Compose([ScaleIntensity(), EnsureChannelFirst(), Resize((96, 96, 96))])
     train_dataset = ClsDatasetH5py(list_file=args.train_list,
-                                   h5py_path='/media/spgou/DATA/ZYJ/Dataset/UCSF_TCIA_ROI_images_h5py',
+                                   h5py_path='/media/spgou/FAST/UCSF_TCIA_ROI_images_h5py',
                                    transform=[
+                                        # Resize((128, 128, 128), orig_shape=(128, 128, 128)),
                                        RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
                                        # GaussianNoise()
                                    ]

@@ -17,11 +17,11 @@ class ImageInfo:
 
     @property
     def path(self):
-        return self._data[0].split(' ')[0]
+        return self._data[0].split(',')[0]
 
     @property
     def label(self):
-        return self._data[0].split(' ')[1]
+        return self._data[0].split(',')[1]
 
 
 def split_train_test(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data',
@@ -143,6 +143,63 @@ def split_train_test_1p19q(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_befor
             f.write(test_imgs[i] + ' ' + str(int(test_labels[i])) + '\n')
 
 
+def xiangya_split_train_val_test_IDH(glioma_dir='/media/spgou/DATA/ZYJ/Dataset/captk_before_data',
+                            annotate_file='PathologicalData_anonymized_20231027.xlsx'):
+        """
+        处理数据并得到划分好的训练集列表和测试集txt文件，文件的每行是路径加标签
+        :return:
+        """
+        # 读取表格中的数据
+        annotate_file = pd.read_excel(annotate_file, header=0)
+        patients = annotate_file['PatientID_anonymized'].values
+        # labels = annotate_file['WHO_grade'].values
+        labels = annotate_file['analyze_mutation_IDH'].values
+        labels = np.array(labels, dtype=str)
+        # 删除标签为nan的数据，并删除对应的病人ID
+        patients = np.delete(patients, np.where(labels == 'nan'))
+        labels = np.delete(labels, np.where(labels == 'nan'))
+        labels = np.array(labels, dtype=float)
+
+
+        # 将数据分为训练集和测试集
+        # train_patients, test_patients, train_labels, test_labels = train_test_split(patients, labels, test_size=0.2,
+        #                                                                             random_state=0)
+        # 读取图片的路径
+        imgs_path = []
+        img_label = []
+        dirs = os.listdir(glioma_dir)
+        for dir in dirs:
+            patient_id = '_'.join(dir.split('_')[:2])
+            if patient_id in patients:
+                imgs_path.append(os.path.join(glioma_dir, dir))
+                img_label.append(labels[np.where(patients == patient_id)[0][0]])
+
+        # 输出变异和非变异的数量
+        print('IDH mutation: ', len(np.where(np.array(img_label) == 1)[0]))
+        print('IDH wild-type: ', len(np.where(np.array(img_label) == 0)[0]))
+
+        # 将数据分为训练集、验证集和测试集
+        train_val_imgs, test_imgs, train_val_labels, test_labels = train_test_split(imgs_path, img_label, test_size=0.2,
+                                                                            random_state=3407, stratify=img_label)
+        train_imgs, val_imgs, train_labels, val_labels = train_test_split(train_val_imgs, train_val_labels, test_size=0.2,
+                                                                            random_state=3407, stratify=train_val_labels)
+        print('Train Data: ', len(train_imgs))
+        print('Val Data: ', len(val_imgs))
+        print('Test Data: ', len(test_imgs))
+
+        # 将训练集和测试集的数据分别写入txt文件
+        with open('train_patients.txt', 'w') as f:
+            for i in range(len(train_imgs)):
+                f.write(train_imgs[i] + ' ' + str(int(train_labels[i])) + '\n')
+        with open('val_patients.txt', 'w') as f:
+            for i in range(len(val_imgs)):
+                f.write(val_imgs[i] + ' ' + str(int(val_labels[i])) + '\n')
+        with open('test_patients.txt', 'w') as f:
+            for i in range(len(test_imgs)):
+                f.write(test_imgs[i] + ' ' + str(int(test_labels[i])) + '\n')
+
+
+
 def TCGA_train_test_split(image_dir='G:\Dataset\TCGA-TCIA-ArrangedData/TCIA/Images'):
     annotate_dir = '/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData/ArrangedGeneData/TCGA_subtypes_IDH.xlsx'
     # 读取表格中的数据
@@ -200,11 +257,12 @@ def TCGA_train_test_split(image_dir='G:\Dataset\TCGA-TCIA-ArrangedData/TCIA/Imag
     for dir in dirs:
         if dir in patients:
             imgs_path.append(os.path.join(image_dir, dir))
-            # label_1 = IDH[np.where(patients == dir)[0][0]]
+            label_1 = IDH[np.where(patients == dir)[0][0]]
             # label_2 = is_1p19q[np.where(patients == dir)[0][0]]
             # label_3 = is_GBM[np.where(patients == dir)[0][0]]
             # img_label.append([label_1, label_2, label_3])
-            img_label.append(gene_subtype[np.where(patients == dir)[0][0]])
+            # img_label.append(gene_subtype[np.where(patients == dir)[0][0]])
+            img_label.append(label_1)
     # 将数据分为训练集和测试集
     train_imgs, test_imgs, train_labels, test_labels = train_test_split(imgs_path, img_label, test_size=0.2,
                                                                         random_state=3407, stratify=img_label)
@@ -222,10 +280,10 @@ def TCGA_train_test_split(image_dir='G:\Dataset\TCGA-TCIA-ArrangedData/TCIA/Imag
     #             test_labels[i][2]) + '\n')
     with open('tcia_ucsf_train_patients.txt', 'w') as f:
         for i in range(len(train_imgs)):
-            f.write(train_imgs[i] + ' ' + str(train_labels[i]) + '\n')
+            f.write(train_imgs[i] + ',' + str(train_labels[i]) + '\n')
     with open('tcia_ucsf_test_patients.txt', 'w') as f:
         for i in range(len(test_imgs)):
-            f.write(test_imgs[i] + ' ' + str(test_labels[i]) + '\n')
+            f.write(test_imgs[i] + ',' + str(test_labels[i]) + '\n')
 
 
 def ucsf_train_test_split(img_dir='/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCSF-PDGM-v3-20230111_ROI_images'):
@@ -302,7 +360,8 @@ def ucsf_train_test_split(img_dir='/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCS
         if patient_id in patients:
             imgs_path.append(os.path.join(img_dir, dir))
             # label1 = who_grade[np.where(patients == patient_id)[0][0]]
-            label1 = gene_subtype[np.where(patients == patient_id)[0][0]]
+            # label1 = gene_subtype[np.where(patients == patient_id)[0][0]]
+            label1 = num_IDH[np.where(patients == patient_id)[0][0]]
             img_label.append(label1)
 
     # 将数据分为训练集和测试集
@@ -314,10 +373,10 @@ def ucsf_train_test_split(img_dir='/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCS
     # 将训练集和测试集的数据分别写入txt文件
     with open('tcia_ucsf_train_patients.txt', 'a') as f:
         for i in range(len(train_imgs)):
-            f.write(train_imgs[i] + ' ' + str(int(train_labels[i])) + '\n')
+            f.write(train_imgs[i] + ',' + str(int(train_labels[i])) + '\n')
     with open('tcia_ucsf_test_patients.txt', 'a') as f:
         for i in range(len(test_imgs)):
-            f.write(test_imgs[i] + ' ' + str(int(test_labels[i])) + '\n')
+            f.write(test_imgs[i] + ',' + str(int(test_labels[i])) + '\n')
 
 
 class ClsDataset(Dataset):
@@ -528,7 +587,7 @@ if __name__ == '__main__':
     # train_dataset = ClsDataset(list_file='train_patients.txt', transform=[Resize((128, 128, 128)),
     #                                                                       RandomAugmentation((16, 16, 16), (0.8, 1.2),(0.8, 1.2)),
     #                                                                       ])
-    # TCGA_train_test_split('/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData_ROI_images_expand')
+    TCGA_train_test_split('/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData_ROI_images_expand')
     # # test_dataset = ClsDataset(list_file='tcia_test_patients.txt', transform=[Resize((128, 128, 128))])
     # train_dataset = ClsDataset(list_file='tcia_train_patients.txt', transform=[Resize((128, 128, 128)),
     #                                                                              RandomAugmentation((16, 16, 16),
@@ -597,12 +656,12 @@ if __name__ == '__main__':
     #             'G:\\Dataset\\Xiangya_data\\captk_before_data_zscore_normalizedImages_npy')
     # save_as_h5py('/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCSF-PDGM-v3-20230111_ROI_images',
     #              '/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCSF-PDGM-v3-20230111_ROI_images_h5py')
-    # ucsf_train_test_split('/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCSF-PDGM-v3-20230111_ROI_images')
+    ucsf_train_test_split('/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCSF-PDGM-v3-20230111_ROI_images')
 
-    save_as_h5py('/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCSF-PDGM-v3-20230111_ROI_images',
-                 '/media/spgou/DATA/ZYJ/Dataset/UCSF_TCIA_ROI_images_h5py')
-    save_as_h5py('/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData_ROI_images_expand',
-                 '/media/spgou/DATA/ZYJ/Dataset/UCSF_TCIA_ROI_images_h5py')
+    # save_as_h5py('/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCSF-PDGM-v3-20230111_ROI_images',
+    #              '/media/spgou/FAST/UCSF_TCIA_ROI_images_h5py')
+    # save_as_h5py('/media/spgou/DATA/ZYJ/Dataset/TCGA-TCIA-ArrangedData_ROI_images_expand',
+    #              '/media/spgou/FAST/UCSF_TCIA_ROI_images_h5py')
 
     # train_dataset = ClsDatasetH5py(list_file='ucsf_train_patients.txt',
     #                                h5py_path='/media/spgou/DATA/ZYJ/Dataset/5.UCSF-PDGM/UCSF-PDGM-v3-20230111_ROI_images_h5py',
