@@ -5,11 +5,11 @@ import argparse
 parser = argparse.ArgumentParser(description="PyTorch implementation of image classification")
 
 # ========================= Data Configs ==========================
-parser.add_argument('--num_classes', type=int, default=2, help='the numbers of the image classification task')
+parser.add_argument('--num_classes', type=int, default=3, help='the numbers of the image classification task')
 parser.add_argument('--input_size', default=128, type=int, help="the input feature dimension for the ")
-parser.add_argument('--train_list', default='/media/spgou/FAST/ZYJ/Glioma_easy/dataset/tcia_ucsf_train_patients.txt', type=str, help='the path of training samples text file')
-parser.add_argument('--val_list', default='/media/spgou/FAST/ZYJ/Glioma_easy/dataset/tcia_ucsf_test_patients.txt', type=str, help='the path of validation samples text file')
-
+parser.add_argument('--train_list', default='/media/spgou/FAST/ZYJ/Glioma_MTTU/data/ucsf_train_patients.txt', type=str, help='the path of training samples text file')
+parser.add_argument('--val_list', default='/media/spgou/FAST/ZYJ/Glioma_MTTU/data/ucsf_val_patients.txt', type=str, help='the path of validation samples text file')
+parser.add_argument('--test_list', default='/media/spgou/FAST/ZYJ/Glioma_MTTU/data/ucsf_test_patients.txt', type=str, help='the path of testing samples text file')
 
 
 # ========================= Model Configs ==========================
@@ -24,7 +24,7 @@ parser.add_argument('--dropout', type=float, default=0.5)
 
 
 # ========================= Learning Configs ==========================
-parser.add_argument('--epochs', default=300, type=int, metavar='N',
+parser.add_argument('--epochs', default=100, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('-b', '--batch-size', default=2, type=int,
                     metavar='N', help='mini-batch size')
@@ -61,7 +61,7 @@ parser.add_argument('-j', '--workers', default=16, type=int, metavar='N',
 
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--output', type=str, default='./tcia_ucsf_roi_idh_outputs', help='save dir for logs and outputs')
+parser.add_argument('--output', type=str, default='./ucsf_roi_3grade_outputs', help='save dir for logs and outputs')
 
 
 parser.add_argument('--backend', default='nccl', type=str, help='Pytorch DDP backend, gloo or nccl')

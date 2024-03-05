@@ -15,6 +15,7 @@ from monai.transforms import EnsureChannelFirst, Compose, RandRotate90, Resize, 
 from dataset.transform import *
 # from dataset.transform import MedicalImageScaler
 from models import uniformerv2_b16
+from torchsampler import ImbalancedDatasetSampler
 
 FILE = Path(__file__).resolve()
 
@@ -57,25 +58,26 @@ def train(device, args):
     #                              )
 
     val_dataset = ClsDatasetH5py(list_file=args.val_list,
-                                 h5py_path='/media/spgou/FAST/UCSF_TCIA_ROI_images_h5py',
-                                 transform=None
+                                 h5py_path='/media/spgou/FAST/UCSF/UCSF-PDGM-v3-20230111_ROI_images_h5py',
+                                 mode='val'
                                  # [Resize((128, 128, 128),
-                                                   # orig_shape=(155, 240, 240)
-                                                   # ),
-                                            # RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
-                                            # ],
+                                 # orig_shape=(155, 240, 240)
+                                 # ),
+                                 # RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
+                                 # ],
 
                                  )
 
     # train_transforms = Compose([ScaleIntensity(), EnsureChannelFirst(), Resize((96, 96, 96)), RandRotate90()])
     # val_transforms = Compose([ScaleIntensity(), EnsureChannelFirst(), Resize((96, 96, 96))])
     train_dataset = ClsDatasetH5py(list_file=args.train_list,
-                                   h5py_path='/media/spgou/FAST/UCSF_TCIA_ROI_images_h5py',
-                                   transform=[
-                                        # Resize((128, 128, 128), orig_shape=(128, 128, 128)),
-                                       RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
-                                       # GaussianNoise()
-                                   ]
+                                   h5py_path='/media/spgou/FAST/UCSF/UCSF-PDGM-v3-20230111_ROI_images_h5py',
+                                   mode='train'
+                                   # transform=[
+                                   #     # Resize((128, 128, 128), orig_shape=(128, 128, 128)),
+                                   #     RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2)),
+                                   #     # GaussianNoise()
+                                   # ]
                                    )
     # [RandomAugmentation((16, 16, 16), (0.8, 1.2), (0.8, 1.2), (0.8, 1.2)),
     #                    ToTensor()]
@@ -87,6 +89,7 @@ def train(device, args):
         num_workers=args.workers, pin_memory=True)
 
     train_loader = torch.utils.data.DataLoader(train_dataset,
+                                               sampler=ImbalancedDatasetSampler(train_dataset),
                                                batch_size=args.batch_size,
                                                num_workers=args.workers, pin_memory=True,
                                                drop_last=True)
@@ -242,9 +245,9 @@ def train(device, args):
         train_accuracy = accuracy_score(train_labels, train_preds)
         logger.info(f'train_accuracy = {train_accuracy:.4f}')
         tb_writer.add_scalar('train/accuracy', train_accuracy, epoch + 1)
-        # 清理GPU缓存
-        torch.cuda.empty_cache()
-        gc.collect()
+        # # 清理GPU缓存
+        # torch.cuda.empty_cache()
+        # gc.collect()
 
 
 def check_rootfolders():

@@ -406,6 +406,29 @@ def batch_get_roi(img_dir, mask_dir, save_path):
                 crop_roi_expand(img_file, patient_mask, save_file)
 
 
+def batch_get_data_roi(img_dir, save_path):
+    """
+    把原来的图像和掩码图像分别裁剪ROI区域，然后再把裁剪后的图像和掩码图像分别扩展到原来的尺寸，分割文件和源模态文件在一个文件夹下
+    """
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+    patient_dirs = os.listdir(img_dir)
+    for patient_dir in tqdm(patient_dirs):
+        patient = os.path.join(img_dir, patient_dir)
+        patient_save = os.path.join(save_path, patient_dir)
+        if not os.path.exists(patient_save):
+            os.mkdir(patient_save)
+        mod_file = os.listdir(patient)
+        mod_file = [file for file in mod_file if file.endswith(".nii.gz")]
+        img_files = [file for file in mod_file if "seg" not in file]
+        mask_files = [file for file in mod_file if "seg" in file]
+        for img_file in img_files:
+            img_file = os.path.join(patient, img_file)
+            mask_file = os.path.join(patient, mask_files[0])
+            save_file = os.path.join(patient_save, img_file.split('/')[-1])
+            crop_roi_expand(img_file, mask_file, save_file)
+
+
 if __name__ == '__main__':
     # img_nii_gz_path = "./test_T1.nii.gz"
     # arr_img = load_nii_gz_as_array(img_nii_gz_path)

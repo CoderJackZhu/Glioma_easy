@@ -35,12 +35,9 @@ def evaluate(local_rank, device, args):
 
     with torch_distributed_zero_first(rank):
         val_dataset = ClsDatasetH5py(
-            list_file=args.val_list,
-            h5py_path='/media/spgou/DATA/ZYJ/Dataset/UCSF_TCIA_ROI_images_h5py',
-            transform=[Resize((128, 128, 128),
-                              # orig_shape=(155, 240, 240)
-                              # , orig_shape=(155, 240, 240)
-                              )]
+            list_file=args.test_list,
+            h5py_path='/media/spgou/FAST/UCSF/UCSF-PDGM-v3-20230111_ROI_images_h5py',
+            mode='test',
         )
 
     val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False)
@@ -126,6 +123,10 @@ def evaluate(local_rank, device, args):
             precision = metrics.precision_score(labels, predicts, average='macro')
             recall = metrics.recall_score(labels, predicts, average='macro')
             f1 = metrics.f1_score(labels, predicts, average='macro')
+            sensitivity = confusion[1, 1] / (confusion[1, 1] + confusion[1, 0])
+            specificity = confusion[0, 0] / (confusion[0, 0] + confusion[0, 1])
+            print('sensitivity: %.4f' % sensitivity)
+            print('specificity: %.4f' % specificity)
             print('accuracy: %.4f' % accuracy)
             print('precision: %.4f' % precision)
             print('recall: %.4f' % recall)
